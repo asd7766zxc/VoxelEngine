@@ -9,28 +9,30 @@
 #include <GL/glut.h>
 #include "Camera.hpp"
 #include "MathUtility.hpp"
+#include "Voxel.hpp"
+#include "VoxelDrawer.hpp"
+#include "TerrainGenerator.hpp"
+#include "SpringGraph.hpp"
+#include "SpringSuperGraph.hpp"
+#include "DrawingUtility.hpp"
+#include "GlobalDefinitions.hpp"
+#include "Vehicle.hpp"
 
 #define  PI   3.141592653
 
 #define Step  0.5
 
- /*-----Define a unit box--------*/
- /* Vertices of the box */
-float  points[][3] = { {-0.5, -0.5, -0.5}, {0.5, -0.5, -0.5},
-                      {0.5, 0.5, -0.5}, {-0.5, 0.5, -0.5},
-                      {-0.5, -0.5, 0.5}, {0.5, -0.5, 0.5},
-                      {0.5, 0.5, 0.5}, {-0.5, 0.5, 0.5} };
-/* face of box, each face composing of 4 vertices */
-int    face[][4] = { {0, 3, 2, 1}, {0, 1, 5, 4}, {1, 2, 6, 5},
-                    {4, 5, 6, 7}, {2, 3, 7, 6}, {0, 4, 7, 3} };
-float  colors[6][3] = { {0.5,0.5,0.5}, {0.7,0.7,0.7}, {0.7,0.5,0.5},
-                     {0.5,0.5,0.5}, {0.5,0.7,0.5}, {0.5,0.5,0.7} };
 /* indices of the box faces */
 int    cube[6] = { 0, 1, 2, 3, 4, 5 };
 
 /*-Declare GLU quadric objects, sphere, cylinder, and disk --*/
 GLUquadricObj* sphere = NULL, * cylind = NULL, * disk;
 Camera* camera;
+//TerrainGenerator* terrain_generator;
+//TerrainContainer terrains;
+SpringSuperGraph* spring_graph;
+
+std::vector<DrawObject* > draw_vec;
 
 /*-Declare car position, orientation--*/
 float  self_ang = -90.0, glob_ang = 0.0;
@@ -44,6 +46,7 @@ int width = 512, height = 512;
  */
 void  myinit()
 {
+    glDrawBuffer(GL_BACK);
     glClearColor(0.0, 0.0, 0.0, 1.0);      /*set the background color BLACK */
     /*Clear the Depth & Color Buffers */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -67,25 +70,6 @@ void  myinit()
     }
 }
 
-
-/*--------------------------------------------------------
- * Procedure to draw a 1x1x1 cube. The cube is within
- * (-0.5,-0.5,-0.5) ~ (0.5,0.5,0.5)
- */
-void draw_cube()
-{
-    int    i;
-
-    for (i = 0; i < 6; i++) {
-        glColor3fv(colors[i]);  /* Set color */
-        glBegin(GL_POLYGON);  /* Draw the face */
-        glVertex3fv(points[face[i][0]]);
-        glVertex3fv(points[face[i][1]]);
-        glVertex3fv(points[face[i][2]]);
-        glVertex3fv(points[face[i][3]]);
-        glEnd();
-    }
-}
 
 
 /*---------------------------------------------------------
@@ -168,54 +152,15 @@ void display()
     /*----Define the current eye position and the eye-coordinate system---*/
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+    //Camera trace
+    //camera->pos = spring_graph->U->joints[0].pos + vec3(10, 10, 0);
     camera->LookAt();
-    draw_floor();
+    terrain_generator->draw();
+    for (auto obj : draw_vec) obj->draw();
+    //draw_floor();
 
-    draw_axes();
-    /*-------Draw the car body which is a cube----*/
-    glTranslatef(position[0], 0.0, position[2]);
-    glRotatef(self_ang, 0.0, 1.0, 0.0);
-
-    glPushMatrix();              /* Save M1 coord. sys */
-    glScalef(17.0, 3.0, 6.0);    /* Scale up the axes */
-    draw_cube();
-    glPopMatrix();               /* Get M1 back */
-
-    /*-------Draw the front wheels -----*/
-    glColor3f(1.0, 0.0, 0.0);
-    glPushMatrix();              /* Save M1 coord. sys */
-    glTranslatef(-6.0, 0.0, 4.0); /* Go to left wheel position */
-    glutSolidTorus(1.0,  /* inner radius */
-        2.0,  /* outer radius */
-        24,   /* divided into 18 segments */
-        12);  /* 12 rings */
-    glPopMatrix();
-
-    glPushMatrix();              /* Save M1 coord. sys */
-    glTranslatef(-6.0, 0.0, -4.0);/* Go to right wheel position */
-    glutSolidTorus(1.0,  /* inner radius */
-        2.0,  /* outer radius */
-        24,   /* divided into 18 segments */
-        12);  /* 12 rings */
-    glPopMatrix();
-
-    /*------Draw back wheels ----*/
-    glColor3f(1.0, 0.4, 0.0);
-    glPushMatrix();              /* Save M1 coord. sys */
-    glTranslatef(6.0, 0.0, 4.0); /* Go to left wheel position */
-    glutSolidTorus(1.0,  /* inner radius */
-        2.0,  /* outer radius */
-        24,   /* divided into 18 segments */
-        12);  /* 12 rings */
-    glPopMatrix();
-
-    glPushMatrix();              /* Save M1 coord. sys */
-    glTranslatef(6.0, 0.0, -4.0);/* Go to right wheel position */
-    glutSolidTorus(1.0,  /* inner radius */
-        2.0,  /* outer radius */
-        24,   /* divided into 18 segments */
-        12);  /* 12 rings */
-    glPopMatrix();
+    //draw_axes();
 
     /*-------Swap the back buffer to the front --------*/
     glutSwapBuffers();
@@ -237,12 +182,10 @@ void my_reshape(int w, int h)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    if (w > h)
-        glOrtho(-40.0, 40.0, -40.0 * (float)h / (float)w, 40.0 * (float)h / (float)w,
-            -100.0, 100.0);
-    else
-        glOrtho(-40.0 * (float)w / (float)h, 40.0 * (float)w / (float)h, -40.0, 40.0,
-            -100.0, 100.0);
+    float aspect_ratio = w / (float)h;
+    float fov = 10.0f;
+    float zfar = 100.0f;
+    gluPerspective(90, aspect_ratio,0.01, zfar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -267,14 +210,32 @@ void my_quit(unsigned char key, int x, int y)
         self_ang += 10.0;
     }
     else if (key == 'c') self_ang -= 10.0;
-    display();
-}
 
+    if (key == 'w') {
+        camera->pos = uni(camera->front - camera->pos) * 1.0f + camera->pos;
+        //spring_graph->joints[0].velocity += vec3(1, 0, 0);
+    }
+    if (key == 's') {
+        camera->pos = uni(camera->front - camera->pos) * -1.0f + camera->pos;
+    }
+    if (key == 'e') {
+        spring_graph->U->joints[0].force += vec3(1000, 0, 0);
+    }
+    /*if (key == 'e') {
+        spring_graph->joints[0].force += vec3(1000, 0, 0);
+    }*/
+    //display();
+}
+void mainLoop(int val) {
+    for (auto obj : draw_vec) obj->update();
+    glutTimerFunc(0, mainLoop, -1);
+}
 int mx = 0, my = 0;
 void passive_func(int x, int y) {
-    camera->mouseMove(x - mx, y - my);
-    mx = x;
-    my = y;
+    camera->mouseMove(x - width/2,y - height/2);
+    //mx = x;
+    //my = y;
+    glutWarpPointer(width / 2, height / 2);
 }
 
 /*---------------------------------------------------
@@ -288,19 +249,70 @@ void main(int argc, char** argv)
 
     /*-----Depth buffer is used, be careful !!!----*/
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    /*terrain_generator = new TerrainGenerator(
+        [](ld x, ld y) {
+            return 5 * (cos(x / 10.0) + sin(y / 10.0)); 
+        }, 
+        [](ld x, ld y) {
+            return vec3();
+        },
+        [](ld x, ld y) {
+            return Color{ 1,1,1 } * ((cos(x / 10.0) + sin(y / 10.0) + 2) / 4.0);
+        },
+        vec3{ -50,1,-50}, 100, 100,0.5);*/
+    terrain_generator = new TerrainGenerator(
+        [](ld x, ld y) {
+            return 1;
+        },
+        [](ld x, ld y) {
+            return vec3(0,1,0);
+        },
+        [](ld x, ld y) {
+            int i = x / 10;
+            int j = y / 10;
+            return ((i + j) % 2 ? Color{ 1,1,1 } : Color{0,0,0});
+        },
+        vec3{ -50,0 ,-50 }, 100, 100, 0.5);
+    terrain_generator->generate();
+    //terrains.U.push_back(terrain_generator);
 
     glutInitWindowSize(width, height);
-    glutCreateWindow("windmill");
+    glutCreateWindow("i.car");
 
     myinit();      /*---Initialize other state varibales----*/
-    camera = new Camera(vec3(8.0, 5.0, 15.0),vec3(0,0,0));
+    camera = new Camera(vec3(-20, 10, 20),vec3(0,0,0));
+    auto g = std::vector<Joint>{ {vec3(0,0,0)},{vec3(10,0,0)},{vec3(0,10,0)},{vec3(0,0,10)},{vec3(10,10,0)},{vec3(10,10,10)},{vec3(10,0,10)}};
+    SpringGraph * sg = new SpringGraph(g);
+    SpringGraph * sg1 = new SpringGraph(g);
+    spring_graph = new SpringSuperGraph();
+    sg->addEdge(Spring{ 0,1 });
+    sg->addEdge(Spring{ 0,2 });
+    sg->addEdge(Spring{ 0,3 });
+    sg->addEdge(Spring{ 1,2 });
+    sg->addEdge(Spring{ 1,3 });
+    sg->addEdge(Spring{ 2,3 });
+
+    sg1->addEdge(Spring{ 0,1 });
+    sg1->addEdge(Spring{ 0,2 });
+    sg1->addEdge(Spring{ 0,3 });
+    sg1->addEdge(Spring{ 1,2 });
+    sg1->addEdge(Spring{ 1,3 });
+    sg1->addEdge(Spring{ 2,3 });
+
+    spring_graph->addGraph(sg);
+    spring_graph->addGraph(sg1);
+    spring_graph->build();
+    spring_graph->addEdge(sg,sg1,Spring{0,1});
+    draw_vec.push_back(spring_graph);
+    auto car = new Vehicle();
+    draw_vec.push_back(car);
     /*----Associate callback func's whith events------*/
     glutDisplayFunc(display);
     glutIdleFunc(display);
     glutReshapeFunc(my_reshape);
     glutKeyboardFunc(my_quit);
     glutPassiveMotionFunc(passive_func);
-
+    glutTimerFunc(1, mainLoop, -1);
     glutMainLoop();
 }
 

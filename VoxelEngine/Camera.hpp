@@ -15,12 +15,14 @@ public:
 
     void mouseMove(float dx, float dy) {
         pitch += dx * horizontal_sensitivity;
-        yaw += dy * vertical_sensitivity;
-
+        yaw -= dy * vertical_sensitivity;
         if (yaw >= pi / 2) yaw = pi / 2 - 0.1f;
         if (yaw <= -pi / 2) yaw = -pi / 2 + 0.1f;
+        //printf("")
         
-        vec3 w = vec3(cos(pitch) * cos(yaw), cos(pitch) * sin(yaw),sin(pitch));
+        vec3 w = vec3(cos(yaw) * cos(pitch),
+                      sin(yaw),
+                      cos(yaw) * sin(pitch));
         front = pos + w;
         //right
         vec3 u = uni(w ^ vec3(0, 1, 0));

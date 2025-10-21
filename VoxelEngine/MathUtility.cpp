@@ -10,7 +10,7 @@ vec3 uni(vec3 a) {
 }
 ld angle(vec3 a, vec3 b) {
 	if (sgn(abs(a)) == 0 || sgn(abs(b)) == 0) return 0;
-	return (a * b) / abs(a) / abs(b);
+	return acos((a * b) / abs(a) / abs(b));
 }
 vec3 Rx(vec3 v, ld t) {
 	ld c = cos(t);
@@ -47,4 +47,7 @@ vec3 rotate(vec3 v, vec3 axis, vec3 o, ld t) {
 	v = Rx(v, ofa);
 	v = v + o;
 	return v;
+}
+ld radToDegree(ld rad) {
+	return rad * 180 / pi;
 }

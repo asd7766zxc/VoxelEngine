@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -128,14 +128,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DrawingUtility.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MathUtility.cpp" />
+    <ClCompile Include="PhysicUtility.cpp" />
+    <ClCompile Include="Spring.hpp" />
     <ClCompile Include="Storages.cpp" />
+    <ClCompile Include="TerrainGenerator.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="DrawingUtility.hpp" />
+    <ClInclude Include="DrawObject.hpp" />
+    <ClInclude Include="GlobalDefinitions.hpp" />
+    <ClInclude Include="Joint.hpp" />
     <ClInclude Include="MathUtility.hpp" />
+    <ClInclude Include="Model.hpp" />
+    <ClInclude Include="PhysicUtility.hpp" />
+    <ClInclude Include="SpringGraph.hpp" />
+    <ClInclude Include="SpringSuperGraph.hpp" />
     <ClInclude Include="Storages.hpp" />
+    <ClInclude Include="Vehicle.hpp" />
+    <ClInclude Include="Voxel.hpp" />
+    <ClInclude Include="VoxelDrawer.hpp" />
+    <ClInclude Include="VoxelGenerator.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
