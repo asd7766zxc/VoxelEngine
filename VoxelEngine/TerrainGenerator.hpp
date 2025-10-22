@@ -36,11 +36,20 @@ public:
 			}
 		}
 	}
+	vec3 constrains(vec3 position, vec3 velocity) {
+		auto [x, y, z] = position + velocity;
+		if (!(pos.z + 1.f <= z && z < pos.z + height - 1.f)) velocity.z *= -1;
+		if (!(pos.x + 1.f <= x && x < pos.x + width - 1.f)) velocity.x *= -1;
+		ld yy = getY(position.x,position.z);
+		//if (y < yy - 0.1f) velocity.y *= -0.5;
+		return velocity;
+	}
 	ld getY(ld x, ld y) {
 		ld xx = x - pos.x, yy = y - pos.y;
 		x -= pos.x, y -= pos.z;
 		x /= delta, y /= delta;
 		int i = x, j = y;
+		if (getPos(i, j) >= points.size() || getPos(i,j) < 0) return points.back()[1];
 		return points[getPos(i, j)][1];
 	}
 	vec3 getNorm(ld x,ld y) {

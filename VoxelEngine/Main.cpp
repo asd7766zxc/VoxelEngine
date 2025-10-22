@@ -225,7 +225,7 @@ void my_quit(unsigned char key, int x, int y)
     if (key == 'e') {
         auto ori = uni(camera->front - camera->pos);
         ori.y = 0;
-        car->applyForce( ori * 3);
+        car->applyForce( ori * 1 );
     }
 }
 void mainLoop(int val) {
@@ -254,15 +254,15 @@ void main(int argc, char** argv)
     terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
             if (-10 <= x && x < 10 && -10 <= y && y < 10) {
-                return (double)1.0f;
+                return (double)10.0f;
             }
-            return 5 * (cos(x / 20.0) + sin(y / 20.0)); 
+            return 20 * (cos(x / 10.0) + sin(y / 10.0)); 
         }, 
         [](ld x, ld y) {
             return vec3();
         },
         [](ld x, ld y) {
-            return Color{ 1,1,1 } * ((cos(x / 20.0) + sin(y / 20.0) + 2) / 4.0);
+            return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
         },
         vec3{ -50,1,-50}, 100, 100,0.5);
     /*terrain_generator = new TerrainGenerator(

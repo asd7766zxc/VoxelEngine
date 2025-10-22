@@ -25,9 +25,10 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<Wheel* > wheels;
 	std::vector<Spring> springs;
+	ld joint_size = 1.0f;
 
 	ld sx = 2, sy = 1, sz = 4;
-	ld g = 9.8;
+	ld g = 0.5;
 	vec3 pos;
 	vec3 velo;
 	bool toggle_moving = false;
@@ -50,7 +51,7 @@ public:
 		G->enable_gravity = false;
 
 		wheels.push_back(new Wheel());
-		springs.push_back(Spring{ 0,0,1,0.2 });
+		springs.push_back(Spring{ 0,0,1,0.1 });
 	}
 	void draw_body() {
 		for (int i = 0; i < 6; i++) {
@@ -62,28 +63,64 @@ public:
 			glEnd();
 		}
 	}
+	void draw_spring() {
+		std::vector<Color> color{ {1,0,0},{0,1,0},{0,0,1} };
+		for (int i = 0; i < 8; ++i) {
+			glColor3f(TC(color[i % 3]));
+			glPushMatrix();
+			glTranslatef(TP(vertices[i].pos + pos));
+			glScalef(.2, .2, .2);
+			draw_unisphere();
+			glPopMatrix();
+		}
+		glColor3f(1, 1, 1);
+		for (const auto [a, b, k, length, partial] : springs) {
+			vec3 posa = wheels[a]->vert.pos;
+			vec3 posb = vertices[b].pos + pos;
+			glPushMatrix();
+			vec3 w = posb - posa;
+			//vec3 pos = uni(w) * joint_size + posa;
+			glTranslatef(TP(posa));
+			alignZTo(w);
+			glTranslatef(0, 0, joint_size);
+			glScalef(.2, .2, abs(w) - 2 * joint_size);
+			draw_unicylind();
+			glPopMatrix();
+		}
+	}
 	void applyForce(vec3 _force) {
-		wheels[0]->vert.force = _force;
+		wheels[0]->vert.velocity += _force;
 	}
 	void draw() override {
 		draw_body();
 		for (auto& wheel : wheels) wheel->draw();
-		G->draw();
+		//G->draw();
+		draw_spring();
 	}
 	void updateWheel() {
 		for (auto& wheel : wheels) wheel->vert.force += vec3(0, -g, 0);
 		for (auto& wheel : wheels) {
+			wheel->vert.velocity = wheel->vert.velocity * 0.999; // air friction
+		}
+		for (auto& wheel : wheels) {
 			wheel->vert.velocity += wheel->vert.force * dt;
 			wheel->vert.force = vec3();
 		}
-
 		for (auto& wheel : wheels) {
 			auto& vert = wheel->vert;
-			if ((vert.pos + vert.force * dt).y < terrain_generator->getY(vert.pos.x, vert.pos.y)) {
-				wheel->vert.force.y *= -0.2;
+			ld yy = terrain_generator->getY(vert.pos.x, vert.pos.z);
+			if ((vert.pos + vert.velocity * dt).y - wheel->radius < yy) {
+				//wheel->vert.force.y *= -0.2;
+
+				vec3 norm = uni(terrain_generator->getNorm(vert.pos.x, vert.pos.z));
+				auto v = vert.velocity;
+				vert.velocity = v - norm * (v * norm);
+
 			}
-			vert.pos += vert.velocity * dt;
+			
+			vert.pos += terrain_generator->constrains(vert.pos, vert.velocity * dt);
 			wheel->vert.pos += wheel->vert.force * dt;
+
 
 			auto p = wheel->vert.pos;
 			wheel->vert.force.y = 0;
@@ -95,17 +132,17 @@ public:
 			wheel->vert.pos.y = std::max(p.y, terrain_generator->getY(p.x, p.z) + wheel->radius);
 			wheel->vert.force = vec3();
 		}
-
-		for (const auto [a, b, k, length, partial] : springs) {
-			vec3 posa = wheels[a]->vert.pos;
-			vec3 posb = vertices[b].pos + pos;
-			vec3 fd = uni(posb - posa);
-			ld x = (length - abs(posa - posb));
-			ld f = -(k * x);
-			ld aa = f , bb = f;
-			//wheels[a]->vert.force += fd * f;
-			vertices[b].force += fd * -f;
-		}
+		pos = wheels[0]->vert.pos;
+		//for (const auto [a, b, k, length, partial] : springs) {
+		//	vec3 posa = wheels[a]->vert.pos;
+		//	vec3 posb = vertices[b].pos + pos;
+		//	vec3 fd = uni(posb - posa);
+		//	ld x = (length - abs(posa - posb));
+		//	ld f = -(k * x);
+		//	ld aa = f , bb = f;
+		//	//wheels[a]->vert.force += fd * f;
+		//	vertices[b].force += fd * -f;
+		//}
 		//wheel->
 	}
 	void update() override {
@@ -115,10 +152,7 @@ public:
 		for (auto& vert : vertices) {
 			auto p = vert.pos + pos;
 			ld yy = terrain_generator->getY(p.x, p.z);
-			if (abs(p.y - yy) <= 1e-4) {
-
-			}
-			else {
+			if (abs(p.y - yy) > 1e-4) {
 				vert.force += vec3(0, -g, 0);
 			}
 		}
@@ -147,7 +181,15 @@ public:
 
 		//ground adjustment
 		velo += totForce * dt;
-		pos += velo * dt;
+		auto velotmp = velo * dt;
+		//pos += velo * dt;
+		for (auto vert : vertices) {
+			auto p = vert.pos + pos;
+			ld yy = terrain_generator->getY(p.x, p.z);
+			pos.y += std::max(0.f, -(p.y - yy));
+			velotmp = terrain_generator->constrains(p, velotmp);
+		}
+		pos += velotmp;
 		for (auto vert : vertices) {
 			auto p = vert.pos + pos;
 			ld yy = terrain_generator->getY(p.x, p.z);

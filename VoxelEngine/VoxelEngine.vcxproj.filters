@@ -92,5 +92,8 @@
     <ClInclude Include="Vertex.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="BoundingBox.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

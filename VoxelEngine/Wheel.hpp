@@ -7,7 +7,7 @@
 class Wheel : public DrawObject {
 public:
 	Vertex vert;
-	ld radius = 1.0f;
+	ld radius = 0.5f;
 	vec3 zaxi;
 	Wheel() {
 		zaxi = vec3(0, 0, 01);
