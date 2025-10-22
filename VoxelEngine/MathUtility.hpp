@@ -59,6 +59,7 @@ template<class T>
 struct vector3 {
 	T x, y, z;
 	vector3(T _x, T _y, T _z) :x(_x), y(_y), z(_z) {};
+	vector3(T* arr) :x(arr[0]), y(arr[1]), z(arr[2]) {};
 	vector3(): x(0), y(0), z(0) {};
 
 	vector3 operator + (vector3 a) { return vector3(x + a.x, y + a.y, z + a.z); }
@@ -115,7 +116,7 @@ ld angle(vec3 a, vec3 b);
 vec3 Rx(vec3 v, ld t);
 vec3 Ry(vec3 v, ld t);
 vec3 Rz(vec3 v, ld t);
-vec3 rotate(vec3 v, vec3 axis, vec3 o, ld t);
+vec3 rotate(vec3 v, vec3 axis,ld ang);
 vec3 uni(vec3 a);
 ld radToDegree(ld rad);
 using std::numbers::pi;

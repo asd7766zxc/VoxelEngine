@@ -135,6 +135,7 @@
     <ClCompile Include="Spring.hpp" />
     <ClCompile Include="Storages.cpp" />
     <ClCompile Include="TerrainGenerator.hpp" />
+    <ClCompile Include="Wheel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="SpringSuperGraph.hpp" />
     <ClInclude Include="Storages.hpp" />
     <ClInclude Include="Vehicle.hpp" />
+    <ClInclude Include="Vertex.hpp" />
     <ClInclude Include="Voxel.hpp" />
     <ClInclude Include="VoxelDrawer.hpp" />
     <ClInclude Include="VoxelGenerator.hpp" />

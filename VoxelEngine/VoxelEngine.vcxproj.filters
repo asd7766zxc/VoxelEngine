@@ -39,6 +39,9 @@
     <ClCompile Include="TerrainGenerator.hpp">
       <Filter>標頭檔</Filter>
     </ClCompile>
+    <ClCompile Include="Wheel.hpp">
+      <Filter>標頭檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MathUtility.hpp">
@@ -84,6 +87,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="Vehicle.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

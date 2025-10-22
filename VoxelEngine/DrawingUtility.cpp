@@ -2,13 +2,13 @@
 #include "DrawingUtility.hpp"
 #include "MathUtility.hpp"
 
-float cube_points[][3] = { {0, 0, 0}, 
+float cube_points[][3] = { {0, 0, 0},
                        {1, 0, 0},
                        {1, 1, 0},
                        {0, 1, 0},
-                       {0, 0, 1}, 
+                       {0, 0, 1},
                        {1, 0, 1},
-                       {1, 1, 1}, 
+                       {1, 1, 1},
                        {0, 1, 1} };
 
 int cube_face[][4] = { {0, 3, 2, 1}, {0, 1, 5, 4}, {1, 2, 6, 5},
@@ -61,5 +61,10 @@ void alignZTo(vec3 axis) {
     vec3 zaxi(0, 0, 1);
     vec3 norm = uni(axis ^ zaxi);
     ld ang = -angle(axis, zaxi);
+    if (axis.y == 0 && axis.x == 0) {
+        norm = uni(vec3(0, axis.z,0));
+        ang = pi;
+        if (axis.z < 0) ang = -ang;
+    }
     glRotatef(radToDegree(ang), TP(norm));
 }

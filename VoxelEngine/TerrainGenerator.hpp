@@ -7,8 +7,9 @@
 
 //#include "VoxelGenerator.hpp"
 class TerrainGenerator:public DrawObject {
-public:
+private:
 	std::function<ld(ld, ld)> F; // (x,z) -> y
+public:
 	std::function<vec3(ld, ld)> dF; // (x,z) -> (x',y',z') normal vector, perpendicular to terrain itselft
 	std::function<Color(ld, ld)> colorF;
 	std::vector<ld*> points;
@@ -34,6 +35,44 @@ public:
 				colors.push_back(col);
 			}
 		}
+	}
+	ld getY(ld x, ld y) {
+		ld xx = x - pos.x, yy = y - pos.y;
+		x -= pos.x, y -= pos.z;
+		x /= delta, y /= delta;
+		int i = x, j = y;
+		return points[getPos(i, j)][1];
+	}
+	vec3 getNorm(ld x,ld y) {
+		ld xx = x - pos.x, yy = y - pos.y;
+		x -= pos.x, y -= pos.z;
+		x /= delta, y /= delta;
+		int i = x, j = y;
+		ld dx = delta - (xx - i * delta);
+		ld dy = yy - j * delta;
+		if (dx > dy && i < xdim - 1 && j < ydim - 1) {
+			auto _v0 = points[getPos(i, j)];
+			auto _v1 = points[getPos(i + 1, j)];
+			auto _v2 = points[getPos(i, j + 1)];
+			vec3 v0 = vec3(_v0);
+			vec3 v1 = vec3(_v1);
+			vec3 v2 = vec3(_v2);
+			v1 = v1 - v0;
+			v2 = v2 - v0;
+			return (v2 ^ v1);
+		}
+		else if(i && j) {
+			auto _v0 = points[getPos(i, j)];
+			auto _v1 = points[getPos(i - 1, j)];
+			auto _v2 = points[getPos(i, j - 1)];
+			vec3 v0 = vec3(_v0);
+			vec3 v1 = vec3(_v1);
+			vec3 v2 = vec3(_v2);
+			v1 = v1 - v0;
+			v2 = v2 - v0;
+			return (v2 ^ v1);
+		}
+		return dF(xx,yy);
 	}
 	inline int getPos(int i, int j) {
 		return i * ydim + j; 

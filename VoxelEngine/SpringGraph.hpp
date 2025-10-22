@@ -48,14 +48,14 @@ public:
 		if (enable_gravity) {
 			for (auto& joint : joints) {
 				//apply force attenuation
-				//joint.force = joint.force * air_friction;
+				joint.force = joint.force * air_friction;
 				joint.force += vec3(0, -10, 0); // gravity;
 			}
 		}
 		
 		//撞地板
 		for (auto& joint : joints) {
-			ld floor_y = terrain_generator->F(joint.pos.x, joint.pos.z);
+			ld floor_y = terrain_generator->getY(joint.pos.x, joint.pos.z);
 			if (joint.pos.y < floor_y) {
 				joint.force += vec3(0, 1, 0) * abs((joint.velocity.y) / dt);
 			}
@@ -64,7 +64,7 @@ public:
 
 		// F = ma, j0---s---j1
 		// 兩端受力相等，且都為 F 但方向相反
-		for (const auto [a, b, k, length] : springs) {
+		for (const auto [a, b, k, length,partial] : springs) {
 			vec3 posa = joints[a].pos;
 			vec3 posb = joints[b].pos;
 			ld am = joints[a].mass;
@@ -101,7 +101,7 @@ public:
 			glPopMatrix();
 		}
 		glColor3f(1, 1, 1);
-		for (const auto [a, b, k,length] : springs) {
+		for (const auto [a, b, k,length,partial] : springs) {
 			vec3 posa = joints[a].pos;
 			vec3 posb = joints[b].pos;
 			glPushMatrix();

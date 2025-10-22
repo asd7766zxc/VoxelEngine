@@ -22,9 +22,6 @@
 
 #define Step  0.5
 
-/* indices of the box faces */
-int    cube[6] = { 0, 1, 2, 3, 4, 5 };
-
 /*-Declare GLU quadric objects, sphere, cylinder, and disk --*/
 GLUquadricObj* sphere = NULL, * cylind = NULL, * disk;
 Camera* camera;
@@ -137,6 +134,8 @@ void draw_axes()
 }
 
 
+Vehicle* car;
+bool camera_following = false;
 /*-------------------------------------------------------
  * Display callback func. This func. draws three
  * cubes at proper places to simulate a solar system.
@@ -154,11 +153,14 @@ void display()
     glLoadIdentity();
 
     //Camera trace
-    //camera->pos = spring_graph->U->joints[0].pos + vec3(10, 10, 0);
+    if (camera_following) {
+        camera->front = camera->front - camera->pos;
+        camera->front += car->pos + vec3(0, 5, 0);
+        camera->pos = car->pos + vec3(0, 5, 0);
+    }
     camera->LookAt();
     terrain_generator->draw();
     for (auto obj : draw_vec) obj->draw();
-    //draw_floor();
 
     //draw_axes();
 
@@ -213,18 +215,18 @@ void my_quit(unsigned char key, int x, int y)
 
     if (key == 'w') {
         camera->pos = uni(camera->front - camera->pos) * 1.0f + camera->pos;
-        //spring_graph->joints[0].velocity += vec3(1, 0, 0);
     }
     if (key == 's') {
         camera->pos = uni(camera->front - camera->pos) * -1.0f + camera->pos;
     }
-    if (key == 'e') {
-        spring_graph->U->joints[0].force += vec3(1000, 0, 0);
+    if (key == 'f') {
+        camera_following = !camera_following;
     }
-    /*if (key == 'e') {
-        spring_graph->joints[0].force += vec3(1000, 0, 0);
-    }*/
-    //display();
+    if (key == 'e') {
+        auto ori = uni(camera->front - camera->pos);
+        ori.y = 0;
+        car->applyForce( ori * 3);
+    }
 }
 void mainLoop(int val) {
     for (auto obj : draw_vec) obj->update();
@@ -249,18 +251,21 @@ void main(int argc, char** argv)
 
     /*-----Depth buffer is used, be careful !!!----*/
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    /*terrain_generator = new TerrainGenerator(
+    terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
-            return 5 * (cos(x / 10.0) + sin(y / 10.0)); 
+            if (-10 <= x && x < 10 && -10 <= y && y < 10) {
+                return (double)1.0f;
+            }
+            return 5 * (cos(x / 20.0) + sin(y / 20.0)); 
         }, 
         [](ld x, ld y) {
             return vec3();
         },
         [](ld x, ld y) {
-            return Color{ 1,1,1 } * ((cos(x / 10.0) + sin(y / 10.0) + 2) / 4.0);
+            return Color{ 1,1,1 } * ((cos(x / 20.0) + sin(y / 20.0) + 2) / 4.0);
         },
-        vec3{ -50,1,-50}, 100, 100,0.5);*/
-    terrain_generator = new TerrainGenerator(
+        vec3{ -50,1,-50}, 100, 100,0.5);
+    /*terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
             return 1;
         },
@@ -272,7 +277,7 @@ void main(int argc, char** argv)
             int j = y / 10;
             return ((i + j) % 2 ? Color{ 1,1,1 } : Color{0,0,0});
         },
-        vec3{ -50,0 ,-50 }, 100, 100, 0.5);
+        vec3{ -50,0 ,-50 }, 100, 100, 0.5);*/
     terrain_generator->generate();
     //terrains.U.push_back(terrain_generator);
 
@@ -303,8 +308,8 @@ void main(int argc, char** argv)
     spring_graph->addGraph(sg1);
     spring_graph->build();
     spring_graph->addEdge(sg,sg1,Spring{0,1});
-    draw_vec.push_back(spring_graph);
-    auto car = new Vehicle();
+    //draw_vec.push_back(spring_graph);
+    car = new Vehicle();
     draw_vec.push_back(car);
     /*----Associate callback func's whith events------*/
     glutDisplayFunc(display);
