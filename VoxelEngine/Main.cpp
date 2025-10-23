@@ -68,69 +68,24 @@ void  myinit()
 }
 
 
+void drawAxis() {
+    std::vector<Color> colors = { {1,0,0},{0,1,0},{0,0,1} };
+    std::vector<vec3> axiss;
 
-/*---------------------------------------------------------
- * Procedure to draw the floor.
- */
-void draw_floor()
-{
-    int  i, j;
-
-    for (i = 0; i < 10; i++)
-        for (j = 0; j < 10; j++) {
-            if ((i + j) % 2 == 0) glColor3f(1.0, 0.8, 0.8);
-            else glColor3f(0.1, 0.1, 0.7);
-            glBegin(GL_POLYGON);
-            glVertex3f((i - 5.0) * 10.0, -2.5, (j - 5.0) * 10.0);
-            glVertex3f((i - 5.0) * 10.0, -2.5, (j - 4.0) * 10.0);
-            glVertex3f((i - 4.0) * 10.0, -2.5, (j - 4.0) * 10.0);
-            glVertex3f((i - 4.0) * 10.0, -2.5, (j - 5.0) * 10.0);
-            glEnd();
-        }
-}
-
-/*-------------------------------------------------------
- * Procedure to draw three axes and the orign
- */
-void draw_axes()
-{
-
-    /*----Draw a white sphere to represent the original-----*/
-    glColor3f(0.9, 0.9, 0.9);
-
-    gluSphere(sphere, 2.0,   /* radius=2.0 */
-        12,            /* composing of 12 slices*/
-        12);           /* composing of 8 stacks */
-
-    /*----Draw three axes in colors, yellow, meginta, and cyan--*/
-    /* Draw Z axis  */
-    glColor3f(0.0, 0.95, 0.95);
-    gluCylinder(cylind, 0.5, 0.5, /* radius of top and bottom circle */
-        10.0,              /* height of the cylinder */
-        12,               /* use 12-side polygon approximating circle*/
-        3);               /* Divide it into 3 sections */
-
-    /* Draw Y axis */
-    glPushMatrix();
-    glRotatef(-90.0, 1.0, 0.0, 0.0);  /*Rotate about x by -90', z becomes y */
-    glColor3f(0.95, 0.0, 0.95);
-    gluCylinder(cylind, 0.5, 0.5, /* radius of top and bottom circle */
-        10.0,             /* height of the cylinder */
-        12,               /* use 12-side polygon approximating circle*/
-        3);               /* Divide it into 3 sections */
-    glPopMatrix();
-
-    /* Draw X axis */
-    glColor3f(0.95, 0.95, 0.0);
-    glPushMatrix();
-    glRotatef(90.0, 0.0, 1.0, 0.0);  /*Rotate about y  by 90', x becomes z */
-    gluCylinder(cylind, 0.5, 0.5,   /* radius of top and bottom circle */
-        10.0,             /* height of the cylinder */
-        12,               /* use 12-side polygon approximating circle*/
-        3);               /* Divide it into 3 sections */
-    glPopMatrix();
-    /*-- Restore the original modelview matrix --*/
-    glPopMatrix();
+    for (int i = 0; i < 3; i++) {
+        glColor3f(TC(colors[i % 3]));
+        auto u = vec3(TC(colors[i])) * 10;
+        axiss.push_back(u);
+    }
+    for (int i = 0; i < axiss.size(); ++i) {
+        glColor3f(TC(colors[i % 3]));
+        glPushMatrix();
+        //glTranslatef(/*TP(pos)*/);
+        alignZTo(axiss[i]);
+        glScalef(.2, .2, abs(axiss[i]));
+        draw_unicylind();
+        glPopMatrix();
+    }
 }
 
 
@@ -163,6 +118,7 @@ void display()
     for (auto obj : draw_vec) obj->draw();
 
     //draw_axes();
+    drawAxis();
 
     /*-------Swap the back buffer to the front --------*/
     glutSwapBuffers();
@@ -186,7 +142,7 @@ void my_reshape(int w, int h)
     glLoadIdentity();
     float aspect_ratio = w / (float)h;
     float fov = 10.0f;
-    float zfar = 100.0f;
+    float zfar = 10000.0f;
     gluPerspective(90, aspect_ratio,0.01, zfar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -200,18 +156,6 @@ void my_reshape(int w, int h)
 void my_quit(unsigned char key, int x, int y)
 {
     if (key == 'Q' || key == 'q') exit(0);
-    if (key == 'f') {
-        position[0] += Step * cos(self_ang * PI / 180.0);
-        position[2] -= Step * sin(self_ang * PI / 180.0);
-    }
-    else if (key == 'b') {
-        position[0] -= Step * cos(self_ang * PI / 180.0);
-        position[2] += Step * sin(self_ang * PI / 180.0);
-    }
-    else if (key == 'r') {
-        self_ang += 10.0;
-    }
-    else if (key == 'c') self_ang -= 10.0;
 
     if (key == 'w') {
         camera->pos = uni(camera->front - camera->pos) * 1.0f + camera->pos;
@@ -222,10 +166,24 @@ void my_quit(unsigned char key, int x, int y)
     if (key == 'f') {
         camera_following = !camera_following;
     }
-    if (key == 'e') {
+    if (key == 't') {
         auto ori = uni(camera->front - camera->pos);
         ori.y = 0;
         car->applyForce( ori * 1 );
+    }
+
+    if (key == 'g') {
+        auto ori = uni(camera->front - camera->pos);
+        ori.y = 0;
+        car->applyForce(ori * -1);
+    }
+
+    if (key == 'y') {
+        car->totTorque += vec3(0, -100, 0);
+    }
+
+    if (key == 'h') {
+        car->totTorque += vec3(0, 100, 0);
     }
 }
 void mainLoop(int val) {
@@ -253,10 +211,10 @@ void main(int argc, char** argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
-            if (-10 <= x && x < 10 && -10 <= y && y < 10) {
+            if (-10 <= x && x < 10 && -30 <= y && y < 40) {
                 return (double)10.0f;
             }
-            return 20 * (cos(x / 10.0) + sin(y / 10.0)); 
+            return 5 * (cos(x / 10.0) + sin(y / 10.0)); 
         }, 
         [](ld x, ld y) {
             return vec3();
@@ -264,7 +222,7 @@ void main(int argc, char** argv)
         [](ld x, ld y) {
             return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
         },
-        vec3{ -50,1,-50}, 100, 100,0.5);
+        vec3{ -50,1,-50}, 500, 500,2);
     /*terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
             return 1;
@@ -285,7 +243,7 @@ void main(int argc, char** argv)
     glutCreateWindow("i.car");
 
     myinit();      /*---Initialize other state varibales----*/
-    camera = new Camera(vec3(-20, 10, 20),vec3(0,0,0));
+    camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
     auto g = std::vector<Joint>{ {vec3(0,0,0)},{vec3(10,0,0)},{vec3(0,10,0)},{vec3(0,0,10)},{vec3(10,10,0)},{vec3(10,10,10)},{vec3(10,0,10)}};
     SpringGraph * sg = new SpringGraph(g);
     SpringGraph * sg1 = new SpringGraph(g);
@@ -311,6 +269,14 @@ void main(int argc, char** argv)
     //draw_vec.push_back(spring_graph);
     car = new Vehicle();
     draw_vec.push_back(car);
+    for (int i = 0; i < 4; ++i) {
+        auto bx = new BoundingBox();
+        bx->vert.pos = vec3(10  - (i+1) * 4, 12 , -4 - (i + 1));
+        bx->color = i % 2 ? Color{ 1,1,1 } : Color{ 1,0,0 };
+        bx->isBuilding = i % 2;
+        BBs.push_back(bx);
+        draw_vec.push_back(bx);
+    }
     /*----Associate callback func's whith events------*/
     glutDisplayFunc(display);
     glutIdleFunc(display);

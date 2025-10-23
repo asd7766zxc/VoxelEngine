@@ -3,6 +3,10 @@
 #include "SpringSuperGraph.hpp"
 #include "Vertex.hpp"
 #include "Wheel.hpp"
+#include "Box.hpp"
+#include "BoundingBox.hpp"
+
+std::vector< BoundingBox* > BBs;
 
 float cube_pts[][3] = { {0, 0, 0},
 					   {1, 0, 0},
@@ -20,6 +24,7 @@ int cube_fc[][4] = { {0, 3, 2, 1}, {0, 1, 5, 4}, {1, 2, 6, 5},
 class Vehicle:public DrawObject {
 public:
 	SpringGraph* G;
+	Box box;
 	
 	//box
 	std::vector<Vertex> vertices;
@@ -28,7 +33,7 @@ public:
 	ld joint_size = 1.0f;
 
 	ld sx = 2, sy = 1, sz = 4;
-	ld g = 0.5;
+
 	vec3 pos;
 	vec3 velo;
 	bool toggle_moving = false;
@@ -51,7 +56,14 @@ public:
 		G->enable_gravity = false;
 
 		wheels.push_back(new Wheel());
-		springs.push_back(Spring{ 0,0,1,0.1 });
+		wheels.push_back(new Wheel());
+		wheels.push_back(new Wheel());
+		wheels.push_back(new Wheel());
+
+		for (int i = 0; i < 4; ++i) {
+			wheels[i]->vert.pos = vertices[cube_fc[1][i]].pos + pos;
+			springs.push_back(Spring{ i,cube_fc[1][i],20,0.1});
+		}
 	}
 	void draw_body() {
 		for (int i = 0; i < 6; i++) {
@@ -89,10 +101,34 @@ public:
 		}
 	}
 	void applyForce(vec3 _force) {
-		wheels[0]->vert.velocity += _force;
+		for(int i = 0; i < 4; ++i)
+		wheels[i]->vert.velocity += _force;
 	}
+	void drawAxis() {
+		std::vector<Color> colors = { {1,0,0},{0,1,0},{0,0,1} };
+		std::vector<vec3> axiss;
+
+		for (int i = 0; i < 3; i++) {
+			glColor3f(TC(colors[i % 3]));
+			auto o = vertices[cube_fc[i][0]].pos;
+			auto v1 = vertices[cube_fc[i][1]].pos;
+			auto v2 = vertices[cube_fc[i][2]].pos;
+			axiss.push_back(uni((v1 - o) ^ (v2 - o)) * -10);
+		}
+		for (int i = 0; i < axiss.size(); ++i) {
+			glColor3f(TC(colors[i % 3]));
+			glPushMatrix();
+			glTranslatef(TP(pos));
+			alignZTo(axiss[i]);
+			glScalef(.2, .2, abs(axiss[i]));
+			draw_unicylind();
+			glPopMatrix();
+		}
+	}
+
 	void draw() override {
 		draw_body();
+		//drawAxis();
 		for (auto& wheel : wheels) wheel->draw();
 		//G->draw();
 		draw_spring();
@@ -125,27 +161,40 @@ public:
 			auto p = wheel->vert.pos;
 			wheel->vert.force.y = 0;
 
-			auto orientation = uni(wheel->vert.force ^ vec3(0, 1, 0));
+			auto orientation = uni(wheel->vert.velocity ^ vec3(0, 1, 0));
 
 			if(abs(orientation) > 0.9) wheel->zaxi = orientation;
 
 			wheel->vert.pos.y = std::max(p.y, terrain_generator->getY(p.x, p.z) + wheel->radius);
 			wheel->vert.force = vec3();
 		}
-		pos = wheels[0]->vert.pos;
-		//for (const auto [a, b, k, length, partial] : springs) {
-		//	vec3 posa = wheels[a]->vert.pos;
-		//	vec3 posb = vertices[b].pos + pos;
-		//	vec3 fd = uni(posb - posa);
-		//	ld x = (length - abs(posa - posb));
-		//	ld f = -(k * x);
-		//	ld aa = f , bb = f;
-		//	//wheels[a]->vert.force += fd * f;
-		//	vertices[b].force += fd * -f;
-		//}
+		//pos = wheels[0]->vert.pos;
+		for (const auto [a, b, k, length, partial] : springs) {
+			vec3 posa = wheels[a]->vert.pos;
+			vec3 posb = vertices[b].pos + pos;
+			vec3 fd = uni(posb - posa);
+			ld x = (length - abs(posa - posb));
+			ld f = -(k * x);
+			ld aa = f , bb = f;
+			wheels[a]->vert.force += fd * f;
+			vertices[b].force += fd * -f;
+		}
 		//wheel->
 	}
+
+	vec3 totTorque;
 	void update() override {
+		for (auto& bx : BBs) {
+			while (intersect(bx->box, box)) {
+				auto dir = uni(pos - bx->vert.pos);
+				pos += dir;
+				box.reset();
+				for (auto vert : vertices) {
+					auto p = vert.pos + pos;
+					box.update(p);
+				}
+			}
+		}
 		vec3 cen;
 		int cen_cnt = 0;
 		updateWheel();
@@ -157,11 +206,11 @@ public:
 			}
 		}
 		vec3 totForce;
-		vec3 totTorque;
 		if (cen_cnt == 0) cen = vec3();
 		else {
 			cen = cen * (1.0f / cen_cnt);
 		}
+		
 		std::vector<std::pair<vec3, ld>> rotations;
 		for (auto& vert : vertices) {
 			totForce += vert.force;
@@ -178,10 +227,11 @@ public:
 			if (abs(totTorque) < 1) continue;
 			vert.pos = rotate(vert.pos,uni(totTorque), abs(totTorque) * dt);
 		}
+			totTorque = vec3();
 
 		//ground adjustment
 		velo += totForce * dt;
-		auto velotmp = velo * dt;
+		auto velotmp = velo * dt * 0.999;
 		//pos += velo * dt;
 		for (auto vert : vertices) {
 			auto p = vert.pos + pos;
@@ -195,5 +245,33 @@ public:
 			ld yy = terrain_generator->getY(p.x, p.z);
 			pos.y += std::max(0.f, -(p.y - yy));
 		}
+
+		box.reset();
+
+		//construct boundingBox
+		for (auto vert : vertices) {
+			auto p = vert.pos + pos;
+			box.update(p);
+		}
+		vec3 dv;
+		for (auto& bx : BBs) {
+			if (intersect(bx->box, box)) {
+				auto dir = uni(bx->vert.pos - pos);
+				dv += dir * -(velo * dir) * 0.1;
+				bx->vert.velocity += dir * (velo * dir) * 0.1;
+			}
+		}
+		for (auto& bx : BBs) {
+			while (intersect(bx->box, box)) {
+				auto dir = uni(pos - bx->vert.pos);
+				pos += dir;
+				box.reset();
+				for (auto vert : vertices) {
+					auto p = vert.pos + pos;
+					box.update(p);
+				}
+			}
+		}
+		velo += dv;
 	}
 };

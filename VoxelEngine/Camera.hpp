@@ -18,7 +18,6 @@ public:
         yaw -= dy * vertical_sensitivity;
         if (yaw >= pi / 2) yaw = pi / 2 - 0.1f;
         if (yaw <= -pi / 2) yaw = -pi / 2 + 0.1f;
-        //printf("")
         
         vec3 w = vec3(cos(yaw) * cos(pitch),
                       sin(yaw),
@@ -31,8 +30,4 @@ public:
     void LookAt() {
         gluLookAt(TP(pos),TP(front),TP(up));
     }
-    /*gluLookAt(camera->pos.x, camera->pos.y, camera->pos.z, \
-        camera->front.x, camera->front.y, camera->front.z, \
-        camera->up.x, camera->up.y, camera->up.z);*/
-
 };
