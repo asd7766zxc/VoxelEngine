@@ -8,19 +8,6 @@
 
 std::vector< BoundingBox* > BBs;
 
-float cube_pts[][3] = { {0, 0, 0},
-					   {1, 0, 0},
-					   {1, 1, 0},
-					   {0, 1, 0},
-					   {0, 0, 1},
-					   {1, 0, 1},
-					   {1, 1, 1},
-					   {0, 1, 1} };
-
-int cube_fc[][4] = { {0, 3, 2, 1}, {0, 1, 5, 4}, {1, 2, 6, 5},
-					{4, 5, 6, 7}, {2, 3, 7, 6}, {0, 4, 7, 3} };
-
-
 class Vehicle:public DrawObject {
 public:
 	SpringGraph* G;
@@ -44,7 +31,7 @@ public:
 
 	Vehicle() {
 		pos = vec3(sx / 2, sy / 2, sz / 2);
-		for (auto pt : cube_pts) {
+		for (auto pt : PrimitiveShape::cube) {
 			vertices.push_back({ vec3(pt[0] * sx, pt[1] * sy, pt[2] * sz) - pos });
 		}
 		std::vector<Joint> joints(8);
@@ -61,17 +48,17 @@ public:
 		wheels.push_back(new Wheel());
 
 		for (int i = 0; i < 4; ++i) {
-			wheels[i]->vert.pos = vertices[cube_fc[1][i]].pos + pos;
-			springs.push_back(Spring{ i,cube_fc[1][i],20,0.1});
+			wheels[i]->vert.pos = vertices[PrimitiveShape::face[1][i]].pos + pos;
+			springs.push_back(Spring{ i,PrimitiveShape::face[1][i],20,0.1});
 		}
 	}
 	void draw_body() {
 		for (int i = 0; i < 6; i++) {
 			glBegin(GL_POLYGON);  /* Draw the face */
-			glVertex3f(TP(vertices[cube_fc[i][0]].pos + pos));
-			glVertex3f(TP(vertices[cube_fc[i][1]].pos + pos));
-			glVertex3f(TP(vertices[cube_fc[i][2]].pos + pos));
-			glVertex3f(TP(vertices[cube_fc[i][3]].pos + pos));
+			glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + pos));
+			glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + pos));
+			glVertex3f(TP(vertices[PrimitiveShape::face[i][2]].pos + pos));
+			glVertex3f(TP(vertices[PrimitiveShape::face[i][3]].pos + pos));
 			glEnd();
 		}
 	}
@@ -110,9 +97,9 @@ public:
 
 		for (int i = 0; i < 3; i++) {
 			glColor3f(TC(colors[i % 3]));
-			auto o = vertices[cube_fc[i][0]].pos;
-			auto v1 = vertices[cube_fc[i][1]].pos;
-			auto v2 = vertices[cube_fc[i][2]].pos;
+			auto o = vertices[PrimitiveShape::face[i][0]].pos;
+			auto v1 = vertices[PrimitiveShape::face[i][1]].pos;
+			auto v2 = vertices[PrimitiveShape::face[i][2]].pos;
 			axiss.push_back(uni((v1 - o) ^ (v2 - o)) * -10);
 		}
 		for (int i = 0; i < axiss.size(); ++i) {

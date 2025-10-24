@@ -1,33 +1,35 @@
 #pragma once
 #include "MathUtility.hpp"
+#include "DrawingUtility.hpp"
 class Camera {
 public:
 	vec3 pos,front;
     vec3 up;
     ld horizontal_sensitivity = 0.003;
     ld vertical_sensitivity = 0.003;
-    ld yaw = 0.0f;
-    ld pitch = 0.0f;
+    ld rx = 0.0f;
+    ld yx = 0.0f;
+
+    mat4 view;
+
     Camera(vec3 _pos, vec3 _front):up(0,1,0) {
         pos = _pos;
         front = _front;
+        view.makeIdentity();
+        view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
     }
 
     void mouseMove(float dx, float dy) {
-        pitch += dx * horizontal_sensitivity;
-        yaw -= dy * vertical_sensitivity;
-        if (yaw >= pi / 2) yaw = pi / 2 - 0.1f;
-        if (yaw <= -pi / 2) yaw = -pi / 2 + 0.1f;
+        yx += dx * horizontal_sensitivity;
+        rx -= dy * vertical_sensitivity;
+        if (rx >= pi / 2) rx = pi / 2 - 0.1f;
+        if (rx <= -pi / 2) rx = -pi / 2 + 0.1f;
         
-        vec3 w = vec3(cos(yaw) * cos(pitch),
-                      sin(yaw),
-                      cos(yaw) * sin(pitch));
-        front = pos + w;
-        //right
-        vec3 u = uni(w ^ vec3(0, 1, 0));
-        up = uni(u ^ w);
+		view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
+        front = (-view.inverse().z_axis() + pos);
 	}
+
     void LookAt() {
-        gluLookAt(TP(pos),TP(front),TP(up));
+        glLoadMatrixf(view.transposed().mt);
     }
 };

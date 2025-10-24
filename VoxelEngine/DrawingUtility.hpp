@@ -11,6 +11,29 @@ struct Color {
 		return A * p + B * (1.0 - p);
 	}
 };
+namespace PrimitiveShape {
+
+	const float cube[8][3] = {
+			{0, 0, 0},
+			{1, 0, 0},
+			{1, 1, 0},
+			{0, 1, 0},
+			{0, 0, 1},
+			{1, 0, 1},
+			{1, 1, 1},
+			{0, 1, 1}
+	};
+
+	const int face[6][4] = { 
+		{0, 3, 2, 1}, 
+		{0, 1, 5, 4}, 
+		{1, 2, 6, 5},
+		{4, 5, 6, 7}, 
+		{2, 3, 7, 6}, 
+		{0, 4, 7, 3} 
+	};
+
+};
 
 #define T4C(X) (X).r,(X).g,(X).b,(X).a
 #define TC(X) (X).r,(X).g,(X).b
@@ -21,3 +44,4 @@ void draw_unisphere();
 void drawLink(vec3 a, vec3 b);
 void alignedWithZ(vec3 axis);
 void alignZTo(vec3 axis);
+

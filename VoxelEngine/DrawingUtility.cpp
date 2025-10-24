@@ -2,28 +2,17 @@
 #include "DrawingUtility.hpp"
 #include "MathUtility.hpp"
 
-float cube_points[][3] = { {0, 0, 0},
-                       {1, 0, 0},
-                       {1, 1, 0},
-                       {0, 1, 0},
-                       {0, 0, 1},
-                       {1, 0, 1},
-                       {1, 1, 1},
-                       {0, 1, 1} };
-
-int cube_face[][4] = { {0, 3, 2, 1}, {0, 1, 5, 4}, {1, 2, 6, 5},
-                    {4, 5, 6, 7}, {2, 3, 7, 6}, {0, 4, 7, 3} };
-
 void draw_unicube() {
     for (int i = 0; i < 6; i++) {
         glBegin(GL_POLYGON);  /* Draw the face */
-        glVertex3fv(cube_points[cube_face[i][0]]);
-        glVertex3fv(cube_points[cube_face[i][1]]);
-        glVertex3fv(cube_points[cube_face[i][2]]);
-        glVertex3fv(cube_points[cube_face[i][3]]);
+        glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][0]]);
+        glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][1]]);
+        glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][2]]);
+        glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][3]]);
         glEnd();
     }
 }
+
 //draw a cylinder span toward +z-aixs (base sits on x-y plane)
 GLUquadricObj* unicylind;
 void draw_unicylind() {

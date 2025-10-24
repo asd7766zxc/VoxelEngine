@@ -2,10 +2,12 @@
 #include "MathUtility.hpp"
 #include "DrawingUtility.hpp"
 // (0,0,0) (r,0,0) ... + pos 
-struct Voxel {
+
+class Voxel {
+public:
 	vec3 pos;
 	Color color;
 	ld r;
-	Voxel(vec3 _pos,ld _r):pos(_pos),r(_r){}
-	Voxel() :r(1){}
+	Voxel(vec3 _pos, ld _r) :pos(_pos), r(_r) {}
+	Voxel() :r(1) {}
 };

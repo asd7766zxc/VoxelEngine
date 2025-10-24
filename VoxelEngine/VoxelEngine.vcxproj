@@ -147,6 +147,7 @@
     <ClInclude Include="Joint.hpp" />
     <ClInclude Include="MathUtility.hpp" />
     <ClInclude Include="PhysicUtility.hpp" />
+    <ClInclude Include="Portal.hpp" />
     <ClInclude Include="SpringGraph.hpp" />
     <ClInclude Include="SpringSuperGraph.hpp" />
     <ClInclude Include="Storages.hpp" />

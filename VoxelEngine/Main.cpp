@@ -18,15 +18,7 @@
 #include "GlobalDefinitions.hpp"
 #include "Vehicle.hpp"
 
-#define  PI   3.141592653
-
-#define Step  0.5
-
-/*-Declare GLU quadric objects, sphere, cylinder, and disk --*/
-GLUquadricObj* sphere = NULL, * cylind = NULL, * disk;
 Camera* camera;
-//TerrainGenerator* terrain_generator;
-//TerrainContainer terrains;
 SpringSuperGraph* spring_graph;
 
 std::vector<DrawObject* > draw_vec;
@@ -49,22 +41,6 @@ void  myinit()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
-    /*---Create quadratic objects---*/
-    if (sphere == NULL) {
-        sphere = gluNewQuadric();
-        gluQuadricDrawStyle(sphere, GLU_FILL);
-        gluQuadricNormals(sphere, GLU_SMOOTH);
-    }
-    if (cylind == NULL) {
-        cylind = gluNewQuadric();
-        gluQuadricDrawStyle(cylind, GLU_FILL);
-        gluQuadricNormals(cylind, GLU_SMOOTH);
-    }
-    if (disk == NULL) {
-        disk = gluNewQuadric();
-        gluQuadricDrawStyle(disk, GLU_FILL);
-        gluQuadricNormals(disk, GLU_SMOOTH);
-    }
 }
 
 
