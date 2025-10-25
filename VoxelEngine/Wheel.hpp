@@ -1,16 +1,16 @@
-#include "DrawObject.hpp"
+#include "GameObject.hpp"
 #include <GL/freeglut.h>
 #include "MathUtility.hpp"
 #include "Vertex.hpp"
 #include "DrawingUtility.hpp"
 
-class Wheel : public DrawObject {
+class Wheel : public GameObject {
 public:
 	Vertex vert;
 	ld radius = 0.5f;
 	vec3 zaxi;
 	Wheel() {
-		zaxi = vec3(0, 0, 01);
+		zaxi = vec3(0, 0, 1);
 	}
 	void draw() override {
 		glColor3f(1,0,0);

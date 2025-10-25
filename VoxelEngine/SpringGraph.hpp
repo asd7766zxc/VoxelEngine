@@ -7,11 +7,10 @@
 #include "Spring.hpp"
 #include "PhysicUtility.hpp"
 #include "DrawingUtility.hpp"
-#include "DrawObject.hpp"
 #include "GlobalDefinitions.hpp"
 #include <utility>
 
-class SpringGraph :public DrawObject {
+class SpringGraph :public GameObject {
 public:
 	// G(V,E)
 	// |V| = n, |E| = m

@@ -1,11 +1,11 @@
 #pragma once
-#include "DrawObject.hpp"
+#include "GameObject.hpp"
 #include "Vertex.hpp"
 #include "Box.hpp"
 #include <GL/freeglut.h>
 #include "GlobalDefinitions.hpp"
 
-class BoundingBox : public DrawObject {
+class BoundingBox : public GameObject {
 public:
 	Vertex vert;
 	Box box;
@@ -26,10 +26,10 @@ public:
 		glColor3f(TC(color));
 		for (int i = 0; i < 6; i++) {
 			glBegin(GL_POLYGON);  /* Draw the face */
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + vert.pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + vert.pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][2]].pos + vert.pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][3]].pos + vert.pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + vert.pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + vert.pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][2]].pos + vert.pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][3]].pos + vert.pos));
 			glEnd();
 		}
 

@@ -2,10 +2,10 @@
 #include <vector>
 #include "Spring.hpp"
 #include "SpringGraph.hpp"
-#include "DrawObject.hpp"
+#include "GameObject.hpp"
 #include <map>
 
-class SpringSuperGraph:public DrawObject {
+class SpringSuperGraph:public GameObject {
 public:
 	SpringGraph* U;
 	std::vector<Joint> joints;

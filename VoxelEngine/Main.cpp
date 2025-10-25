@@ -21,11 +21,9 @@
 Camera* camera;
 SpringSuperGraph* spring_graph;
 
-std::vector<DrawObject* > draw_vec;
+std::vector<GameObject* > draw_vec;
+VoxelDrawer* vd;
 
-/*-Declare car position, orientation--*/
-float  self_ang = -90.0, glob_ang = 0.0;
-float  position[3] = { 8.0, 0.0, 0.0 };
 
 /*-----Define window size----*/
 int width = 512, height = 512;
@@ -73,8 +71,13 @@ bool camera_following = false;
  */
 void display()
 {
-    static float  ang_self = 0.0;  /*Define the angle of self-rotate */
-    static float  angle = 0.0;
+    static float ang_self = 0.0;  /*Define the angle of self-rotate */
+    static float angle    = 0.0;
+
+    static Voxel vox;
+    vox.scale = vec3(4,4,4);
+    vox.rot.x += 0.01;
+    vox.rot.y += 0.01;
 
     /*Clear previous frame and the depth buffer */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -89,8 +92,10 @@ void display()
         camera->front += car->pos + vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
+
     camera->LookAt();
     terrain_generator->draw();
+    vd->drawSingleVoxel(vox);
     for (auto obj : draw_vec) obj->draw();
 
     //draw_axes();
@@ -117,9 +122,10 @@ void my_reshape(int w, int h)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     float aspect_ratio = w / (float)h;
-    float fov = 10.0f;
+    float fov = 90.0f;
     float zfar = 10000.0f;
-    gluPerspective(90, aspect_ratio,0.01, zfar);
+	camera->resize(w, h, 0.01f, zfar, fov);
+	glLoadMatrixf(camera->proj.transposed().mt);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -253,6 +259,7 @@ void main(int argc, char** argv)
         BBs.push_back(bx);
         draw_vec.push_back(bx);
     }
+    vd = new VoxelDrawer();
     /*----Associate callback func's whith events------*/
     glutDisplayFunc(display);
     glutIdleFunc(display);

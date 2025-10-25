@@ -2,11 +2,11 @@
 #include <GL/freeglut.h>
 #include <functional>
 #include "MathUtility.hpp"
-#include "DrawObject.hpp"
+#include "GameObject.hpp"
 #include "DrawingUtility.hpp"
 
 //#include "VoxelGenerator.hpp"
-class TerrainGenerator:public DrawObject {
+class TerrainGenerator:public GameObject {
 private:
 	std::function<ld(ld, ld)> F; // (x,z) -> y
 public:

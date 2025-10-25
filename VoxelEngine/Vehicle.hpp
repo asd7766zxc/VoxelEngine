@@ -1,14 +1,14 @@
 #pragma once
-#include "DrawObject.hpp"
+#include "GameObject.hpp"
 #include "SpringSuperGraph.hpp"
 #include "Vertex.hpp"
 #include "Wheel.hpp"
 #include "Box.hpp"
 #include "BoundingBox.hpp"
 
-std::vector< BoundingBox* > BBs;
+std::vector<BoundingBox* > BBs;
 
-class Vehicle:public DrawObject {
+class Vehicle: public GameObject {
 public:
 	SpringGraph* G;
 	Box box;
@@ -21,7 +21,6 @@ public:
 
 	ld sx = 2, sy = 1, sz = 4;
 
-	vec3 pos;
 	vec3 velo;
 	bool toggle_moving = false;
 
@@ -203,11 +202,10 @@ public:
 			totForce += vert.force;
 			
 			//spin
-			totTorque += vert.pos ^ vert.force;
+			totTorque += (vert.pos ^ vert.force);
 
 			vert.force = vec3();
 		}
-		auto tmp = rotate(vec3(1, 0, 0), vec3(0, 0, 1), pi / 2);
 
 		//printf("%.2f %.2f %.2f\n", TP(totTorque));
 		for (auto& vert : vertices) {

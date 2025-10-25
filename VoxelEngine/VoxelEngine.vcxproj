@@ -142,7 +142,7 @@
     <ClInclude Include="Box.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="DrawingUtility.hpp" />
-    <ClInclude Include="DrawObject.hpp" />
+    <ClInclude Include="GameObject.hpp" />
     <ClInclude Include="GlobalDefinitions.hpp" />
     <ClInclude Include="Joint.hpp" />
     <ClInclude Include="MathUtility.hpp" />
