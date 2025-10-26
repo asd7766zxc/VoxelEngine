@@ -61,13 +61,17 @@ public:
         vec3 cpos = (view * vec4(pos, 1)).toVec3();
         vec3 cnorm = (view * vec4(norm, 0)).toVec3();
 		vec4 plane = vec4(cnorm.x, cnorm.y, cnorm.z, -(cnorm * cpos));
-        vec4 q = proj.inverse() * vec4(sgn(plane.x), sgn(plane.y), 1.0f, 1.0f );
+        vec4 q = proj.inverse() * vec4(plane.x < 0.0f ? 1.0f : -1.0f, plane.y < 0.0f ? 1.0f : -1.0f, 1.0f, 1.0f );
        
 		vec4 c = plane * (2.0f / (plane * q));
-        proj.mt[8] = c.x;
-        proj.mt[9] = c.y;
+        /*proj.mt[8] = c.x - proj.mt[12];
+        proj.mt[9] = c.y - proj.mt[13];
+        proj.mt[10] = c.z - proj.mt[14];
+        proj.mt[11] = c.w - proj.mt[15];*/
+        proj.mt[8] = c.x ;
+        proj.mt[9] = c.y ;
         proj.mt[10] = c.z + 1.0f;
-        proj.mt[11] = c.w;
+        proj.mt[11] = c.w ; 
 
     }
     mat4 Matrix() const {

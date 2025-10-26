@@ -17,6 +17,7 @@
 #include "DrawingUtility.hpp"
 #include "GlobalDefinitions.hpp"
 #include "Vehicle.hpp"
+#include "Portal.hpp"
 
 Camera* camera;
 SpringSuperGraph* spring_graph;
@@ -75,6 +76,12 @@ void display()
     static float angle    = 0.0;
 
     static Voxel vox;
+    static Portal A;
+    static Portal B;
+	A.pos = vec3(0, 20 ,0);
+	B.pos = vec3(0, 10 , -20);
+    B.rot.x = pi / 4;
+    A.rot.x = pi / 4;
     vox.scale = vec3(4,4,4);
     vox.rot.x += 0.01;
     vox.rot.y += 0.01;
@@ -86,21 +93,29 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+	camera->ObliqueProj(B.pos, B.forward());
     //Camera trace
     if (camera_following) {
         camera->front = camera->front - camera->pos;
         camera->front += car->pos + vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
+        //camera->LookAt();
+    auto drawScence = [&]() {
+        terrain_generator->draw();
+        vd->drawSingleVoxel(vox);
+        for (auto obj : draw_vec) obj->draw();
+        drawAxis();
+	};
+	A.camDraw(*camera,B);
 
-    camera->LookAt();
-    terrain_generator->draw();
-    vd->drawSingleVoxel(vox);
-    for (auto obj : draw_vec) obj->draw();
+	drawScence();
 
-    //draw_axes();
-    drawAxis();
+    glLoadMatrixf(camera->Matrix().transposed().mt);
+	A.camEndDraw();
 
+    drawScence();
+    B.draw();
     /*-------Swap the back buffer to the front --------*/
     glutSwapBuffers();
     return;
@@ -125,7 +140,7 @@ void my_reshape(int w, int h)
     float fov = 90.0f;
     float zfar = 10000.0f;
 	camera->resize(w, h, 0.01f, zfar, fov);
-	glLoadMatrixf(camera->proj.transposed().mt);
+	//glLoadMatrixf(camera->proj.transposed().mt);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }

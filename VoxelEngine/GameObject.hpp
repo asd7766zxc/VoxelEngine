@@ -15,12 +15,12 @@ public:
 	// local coordinate 's zaxis;
 	vec3 forward() {
 		return //往前轉一次
-			(mat4::Rz(rot.z) *
+			-(mat4::Rz(rot.z) *
 			 mat4::Ry(rot.y) *
-			 mat4::Rx(rot.x) ).inverse().z_axis();
+			 mat4::Rx(rot.x) ).z_axis();
 	}
 
-	mat4 worldToLocal() {
+	mat4 worldToLocal() const {
 		return 
 			mat4::scale(1.0/scale) * 
 			mat4::Rx(-rot.x) * // 把軸轉成對齊
@@ -29,7 +29,7 @@ public:
 			mat4::trans(-pos); // 位移
 	}
 
-	mat4 localToWorld() {
+	mat4 localToWorld() const {
 		return
 			mat4::trans(pos) * // 位移
 			mat4::Rz(rot.z) *
@@ -38,7 +38,7 @@ public:
 			mat4::scale(scale);
 	}
 
-	mat4 toWorldNoScale() { // 畫元件用的
+	mat4 toWorldNoScale() const { // 畫元件用的
 		return
 			mat4::trans(pos) * // 位移
 			mat4::Rz(rot.z) *
