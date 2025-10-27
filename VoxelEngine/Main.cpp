@@ -78,13 +78,21 @@ void display()
     static Voxel vox;
     static Portal A;
     static Portal B;
-	A.pos = vec3(0, 20 ,0);
-	B.pos = vec3(0, 10 , -20);
-    B.rot.x = pi / 4;
-    A.rot.x = pi / 4;
+	A.pos = vec3(20, 40 ,0);
+	B.pos = vec3(0, 15 , -20);
+    A.scale = vec3(10, 10, 1);
+    B.scale = vec3(10, 10, 1);
+    //B.rot.x = pi / 4;
+    //A.rot.x = pi / 4;
     vox.scale = vec3(4,4,4);
     vox.rot.x += 0.01;
     vox.rot.y += 0.01;
+
+    vec3 v = camera->pos - A.pos;
+
+    if (uni(A.forward()) * v < 2.0f && abs(v) < 10.0f) {
+        camera->pos = (B.localToWorld() * A.worldToLocal() * vec4(camera->pos, 1)).toVec3();
+    }
 
     /*Clear previous frame and the depth buffer */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -93,14 +101,12 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-	camera->ObliqueProj(B.pos, B.forward());
     //Camera trace
     if (camera_following) {
-        camera->front = camera->front - camera->pos;
-        camera->front += car->pos + vec3(0, 5, 0);
+        camera->front += vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
-        //camera->LookAt();
+
     auto drawScence = [&]() {
         terrain_generator->draw();
         vd->drawSingleVoxel(vox);
@@ -115,7 +121,7 @@ void display()
 	A.camEndDraw();
 
     drawScence();
-    B.draw();
+    //B.draw();
     /*-------Swap the back buffer to the front --------*/
     glutSwapBuffers();
     return;
@@ -137,7 +143,7 @@ void my_reshape(int w, int h)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     float aspect_ratio = w / (float)h;
-    float fov = 90.0f;
+    float fov = 110.0f;
     float zfar = 10000.0f;
 	camera->resize(w, h, 0.01f, zfar, fov);
 	//glLoadMatrixf(camera->proj.transposed().mt);
@@ -155,22 +161,22 @@ void my_quit(unsigned char key, int x, int y)
     if (key == 'Q' || key == 'q') exit(0);
 
     if (key == 'w') {
-        camera->pos = uni(camera->front - camera->pos) * 1.0f + camera->pos;
+        camera->pos = uni(camera->front) * 1.0f + camera->pos;
     }
     if (key == 's') {
-        camera->pos = uni(camera->front - camera->pos) * -1.0f + camera->pos;
+        camera->pos = uni(camera->front) * -1.0f + camera->pos;
     }
     if (key == 'f') {
         camera_following = !camera_following;
     }
     if (key == 't') {
-        auto ori = uni(camera->front - camera->pos);
+        auto ori = uni(camera->front);
         ori.y = 0;
         car->applyForce( ori * 1 );
     }
 
     if (key == 'g') {
-        auto ori = uni(camera->front - camera->pos);
+        auto ori = uni(camera->front);
         ori.y = 0;
         car->applyForce(ori * -1);
     }
@@ -219,20 +225,8 @@ void main(int argc, char** argv)
         [](ld x, ld y) {
             return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
         },
-        vec3{ -50,1,-50}, 500, 500,2);
-    /*terrain_generator = new TerrainGenerator(
-        [](ld x, ld y) {
-            return 1;
-        },
-        [](ld x, ld y) {
-            return vec3(0,1,0);
-        },
-        [](ld x, ld y) {
-            int i = x / 10;
-            int j = y / 10;
-            return ((i + j) % 2 ? Color{ 1,1,1 } : Color{0,0,0});
-        },
-        vec3{ -50,0 ,-50 }, 100, 100, 0.5);*/
+        vec3{ -50,1,-50}, 100, 100,2);
+
     terrain_generator->generate();
     //terrains.U.push_back(terrain_generator);
 
@@ -245,6 +239,7 @@ void main(int argc, char** argv)
     SpringGraph * sg = new SpringGraph(g);
     SpringGraph * sg1 = new SpringGraph(g);
     spring_graph = new SpringSuperGraph();
+
     sg->addEdge(Spring{ 0,1 });
     sg->addEdge(Spring{ 0,2 });
     sg->addEdge(Spring{ 0,3 });

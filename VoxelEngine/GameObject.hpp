@@ -13,7 +13,7 @@ public:
 
 
 	// local coordinate 's zaxis;
-	vec3 forward() {
+	vec3 forward() const {
 		return //往前轉一次
 			-(mat4::Rz(rot.z) *
 			 mat4::Ry(rot.y) *

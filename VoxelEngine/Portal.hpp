@@ -11,10 +11,10 @@ public:
 	void rectangle() {
 		glColor3f(1, 1, 1);
 		glBegin(GL_POLYGON);  
-			glVertex3f(0, 0, 0);
-			glVertex3f(10, 0, 0);
-			glVertex3f(10, 10, 0);
-			glVertex3f(0, 10, 0);
+			glVertex3f(-1, -1, 0);
+			glVertex3f(1, -1, 0);
+			glVertex3f(1, 1, 0);
+			glVertex3f(-1, 1, 0);
 		glEnd();
 	}
 	void camDraw(const Camera& cam,const Portal& linkto) {
@@ -22,9 +22,20 @@ public:
 		glLoadIdentity();
 		
 		Camera pcam = cam;
-		vec3 norm = forward();
 		pcam.view = cam.view * (localToWorld() * linkto.worldToLocal());
-		pcam.ObliqueProj(pos - norm,norm);
+
+		//far plane 在oblique clip space 會被忽略 但太大會造成數值誤差
+		//所以直接開 1.0f 
+		pcam.proj[10] = (1.0f + 0.01f) / (0.01f - 1.0f);
+		pcam.proj[11] = (2 * 1.0f * 0.01f) / (0.01f - 1.0f);
+
+
+		vec3 norm = linkto.forward();
+		vec3 _pos = linkto.pos;
+
+		// 由於所有 '座標' 都會被轉到這個 Portal (Oblique 在算時是用 view matrix) 
+		// 所以得拿另一個門的平面 (會被轉到這個門上) 去做 Oblique
+		pcam.ObliqueProj(_pos, linkto.forward());
 
 		glLoadMatrixf(cam.Matrix().transposed().mt);
 
@@ -48,7 +59,7 @@ public:
 			rectangle();
 		glPopMatrix();
 
-		glLoadMatrixf(pcam.Matrix().transposed().mt);
+		glLoadMatrixf(pcam.cMatrix().transposed().mt);
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		glStencilFunc(GL_LEQUAL, 1, 0xFF); //if (ref & mask) >= (stencil & mask)
@@ -59,12 +70,13 @@ public:
 	void camEndDraw() {
 		glDisable(GL_STENCIL_TEST);
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glPushMatrix();
-			glMultMatrixf(worldToLocal().transposed().mt);
+			glMultMatrixf(localToWorld().transposed().mt);
 			rectangle();
 		glPopMatrix();
 

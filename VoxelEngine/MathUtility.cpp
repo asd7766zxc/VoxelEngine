@@ -1,6 +1,6 @@
 #pragma once
 #include "MathUtility.hpp"
-const ld eps = 1e-5;
+
 int sgn(ld x) { return (x > -eps) - (x < eps); }
 ld abs2(vec3 a) { return a.x * a.x + a.y * a.y + a.z * a.z; }
 ld abs(vec3 a) { return sqrt(abs2(a)); }

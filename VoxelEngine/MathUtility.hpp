@@ -422,5 +422,5 @@ vec3 rotate(vec3 v, vec3 axis,ld ang);
 vec3 uni(vec3 a);
 ld radToDegree(ld rad);
 int sgn(ld x);
-
+const ld eps = 1e-5;
 #define TP(p) (p).x,(p).y,(p).z
