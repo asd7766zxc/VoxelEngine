@@ -33,6 +33,33 @@ void draw_unisphere() {
     }
     gluSphere(unisphere,1.0,12,12);
 }
+void draw_unirectangle() {
+    glBegin(GL_POLYGON);
+    glVertex3f(-1, -1, 0);
+    glVertex3f(1, -1, 0);
+    glVertex3f(1, 1, 0);
+    glVertex3f(-1, 1, 0);
+    glEnd();
+}
+
+void drawAxis() {
+    std::vector<Color> colors = { {1,0,0},{0,1,0},{0,0,1} };
+    std::vector<vec3> axiss;
+
+    for (int i = 0; i < 3; i++) {
+        glColor3f(TC(colors[i % 3]));
+        auto u = vec3(TC(colors[i])) * 10;
+        axiss.push_back(u);
+    }
+    for (int i = 0; i < axiss.size(); ++i) {
+        glColor3f(TC(colors[i % 3]));
+        glPushMatrix();
+        alignZTo(axiss[i]);
+        glScalef(.2, .2, abs(axiss[i]));
+        draw_unicylind();
+        glPopMatrix();
+    }
+}
 
 void drawLink(vec3 a, vec3 b) {
     vec3 axi = b - a; // 把空間轉成 b - a 是 z-axis

@@ -1,12 +1,12 @@
 /*-----------------------------------------------------------
- * An example program to draw a car
- *   Author: S.K. Ueng
- *   Date:  11/4/2001
+ *   An non-euclidan engine implement
+ *   Author: asd
  */
+
 #include <stdio.h>
 #include <math.h>
-
 #include <GL/glut.h>
+
 #include "Camera.hpp"
 #include "MathUtility.hpp"
 #include "Voxel.hpp"
@@ -26,78 +26,42 @@ std::vector<GameObject* > draw_vec;
 VoxelDrawer* vd;
 
 
-/*-----Define window size----*/
 int width = 512, height = 512;
 
-/*----------------------------------------------------------
- * Procedure to initialize the working environment.
- */
-void  myinit()
-{
+void  myinit(){
     glDrawBuffer(GL_BACK);
-    glClearColor(0.0, 0.0, 0.0, 1.0);      /*set the background color BLACK */
-    /*Clear the Depth & Color Buffers */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0, 0.0, 0.0, 1.0);     
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
 }
 
 
-void drawAxis() {
-    std::vector<Color> colors = { {1,0,0},{0,1,0},{0,0,1} };
-    std::vector<vec3> axiss;
-
-    for (int i = 0; i < 3; i++) {
-        glColor3f(TC(colors[i % 3]));
-        auto u = vec3(TC(colors[i])) * 10;
-        axiss.push_back(u);
-    }
-    for (int i = 0; i < axiss.size(); ++i) {
-        glColor3f(TC(colors[i % 3]));
-        glPushMatrix();
-        //glTranslatef(/*TP(pos)*/);
-        alignZTo(axiss[i]);
-        glScalef(.2, .2, abs(axiss[i]));
-        draw_unicylind();
-        glPopMatrix();
-    }
-}
-
-
 Vehicle* car;
 bool camera_following = false;
-/*-------------------------------------------------------
- * Display callback func. This func. draws three
- * cubes at proper places to simulate a solar system.
- */
-void display()
-{
-    static float ang_self = 0.0;  /*Define the angle of self-rotate */
-    static float angle    = 0.0;
+void display(){
 
     static Voxel vox;
-    static Portal A;
-    static Portal B;
-	A.pos = vec3(20, 40 ,0);
-	B.pos = vec3(0, 15 , -20);
-    A.scale = vec3(10, 10, 1);
-    B.scale = vec3(10, 10, 1);
-    //B.rot.x = pi / 4;
-    //A.rot.x = pi / 4;
+    static Portal* B = new Portal();
+	B->pos = vec3(0, 15 , -20);
+    B->scale = vec3(10, 10, 1);
+    //B->rot.x = pi / 4.0;
+
+    static Portal* A = new Portal(B);
+	A->pos = vec3(20, 40 ,0);
+    B->linkto = A;
+
+    vox.pos = vec3(20, 40, 0);
     vox.scale = vec3(4,4,4);
     vox.rot.x += 0.01;
     vox.rot.y += 0.01;
 
-    vec3 v = camera->pos - A.pos;
+    A->warp(camera);
+    //B->warp(camera);
 
-    if (uni(A.forward()) * v < 2.0f && abs(v) < 10.0f) {
-        camera->pos = (B.localToWorld() * A.worldToLocal() * vec4(camera->pos, 1)).toVec3();
-    }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    /*Clear previous frame and the depth buffer */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*----Define the current eye position and the eye-coordinate system---*/
+    //全部變換 (包含投影都塞MODELVIEW裡)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -106,34 +70,51 @@ void display()
         camera->front += vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
-
+    auto drawCut = [&](Portal* P,bool flip = false) {
+        glPushMatrix();
+        bool oppo = (camera->pos - P->pos) * P->forward() < 0;
+        if (flip) oppo = !oppo;
+        if (P == B) {
+            vox.pos = (B->localToWorld() * A->worldToLocal() * vec4(vox.pos, 1)).toVec3();
+        }
+        camera->ObliqueProj(P->pos,P->forward(), oppo);
+        glLoadMatrixf(camera->cMatrix().transposed().mt);
+        vd->drawSingleVoxel(vox);
+        glPopMatrix();
+        if (P == B) {
+            vox.pos = (A->localToWorld() * B->worldToLocal() * vec4(vox.pos, 1)).toVec3();
+        }
+    };
     auto drawScence = [&]() {
         terrain_generator->draw();
-        vd->drawSingleVoxel(vox);
         for (auto obj : draw_vec) obj->draw();
         drawAxis();
 	};
-	A.camDraw(*camera,B);
+	A->camDraw(*camera);
 
+    vd->drawSingleVoxel(vox);
 	drawScence();
 
     glLoadMatrixf(camera->Matrix().transposed().mt);
-	A.camEndDraw();
+	A->camEndDraw();
+    
+    //B->camDraw(*camera,*A);
+    //vd->drawSingleVoxel(vox);
+    //drawScence();
+
+    glLoadMatrixf(camera->Matrix().transposed().mt);
+    //B->camEndDraw();
 
     drawScence();
-    //B.draw();
-    /*-------Swap the back buffer to the front --------*/
+    //drawCut(A);
+    //drawCut(B,true);
+
     glutSwapBuffers();
     return;
 }
 
 
-/*--------------------------------------------------
- * Reshape callback function which defines the size
- * of the main window when a reshape event occurrs.
- */
-void my_reshape(int w, int h)
-{
+void my_reshape(int w, int h){
 
     width = w;
     height = h;
@@ -146,29 +127,32 @@ void my_reshape(int w, int h)
     float fov = 110.0f;
     float zfar = 10000.0f;
 	camera->resize(w, h, 0.01f, zfar, fov);
-	//glLoadMatrixf(camera->proj.transposed().mt);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
 
+//Key handling (remainder: 記得變成 key up，down (非 repeat key))
+void keyboard_func(unsigned char key, int x, int y){
 
-/*--------------------------------------------------
- * Keyboard callback func. When a 'q' key is pressed,
- * the program is aborted.
- */
-void my_quit(unsigned char key, int x, int y)
-{
     if (key == 'Q' || key == 'q') exit(0);
 
     if (key == 'w') {
-        camera->pos = uni(camera->front) * 1.0f + camera->pos;
+        camera->pos += uni(camera->front) * 1.0f;
     }
     if (key == 's') {
-        camera->pos = uni(camera->front) * -1.0f + camera->pos;
+        camera->pos += uni(camera->front) * -1.0f;
     }
+    if (key == 'a') {
+        camera->pos += camera->getRight() * -1.0f;
+    }
+    if (key == 'd') {
+        camera->pos += camera->getRight();
+    }
+
     if (key == 'f') {
         camera_following = !camera_following;
     }
+
     if (key == 't') {
         auto ori = uni(camera->front);
         ori.y = 0;
@@ -193,18 +177,12 @@ void mainLoop(int val) {
     for (auto obj : draw_vec) obj->update();
     glutTimerFunc(0, mainLoop, -1);
 }
-int mx = 0, my = 0;
+
 void passive_func(int x, int y) {
     camera->mouseMove(x - width/2,y - height/2);
-    //mx = x;
-    //my = y;
     glutWarpPointer(width / 2, height / 2);
 }
 
-/*---------------------------------------------------
- * Main procedure which defines the graphics environment,
- * the operation style, and the callback func's.
- */
 void main(int argc, char** argv)
 {
     /*-----Initialize the GLUT environment-------*/
@@ -258,7 +236,7 @@ void main(int argc, char** argv)
     spring_graph->addGraph(sg1);
     spring_graph->build();
     spring_graph->addEdge(sg,sg1,Spring{0,1});
-    //draw_vec.push_back(spring_graph);
+    
     car = new Vehicle();
     draw_vec.push_back(car);
     for (int i = 0; i < 4; ++i) {
@@ -270,11 +248,12 @@ void main(int argc, char** argv)
         draw_vec.push_back(bx);
     }
     vd = new VoxelDrawer();
-    /*----Associate callback func's whith events------*/
+
+    // Event registrations 
     glutDisplayFunc(display);
     glutIdleFunc(display);
     glutReshapeFunc(my_reshape);
-    glutKeyboardFunc(my_quit);
+    glutKeyboardFunc(keyboard_func);
     glutPassiveMotionFunc(passive_func);
     glutTimerFunc(1, mainLoop, -1);
     glutMainLoop();

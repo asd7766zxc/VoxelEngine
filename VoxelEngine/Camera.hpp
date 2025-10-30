@@ -25,6 +25,9 @@ public:
 
         view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
     }
+    vec3 getRight() const {
+        return (mat4::Ry(-yx) * mat4::Rx(rx)).x_axis();
+    }
     void resize(int w,int h,float nearp,float farp,float fov) {
 
         const float e = 1.0f / std::tan(fov * pi / 360.f);
@@ -48,33 +51,44 @@ public:
         if (rx <= -pi / 2) rx = -pi / 2 + 0.1f;
         
 		view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
-        front = (-view.inverse().z_axis());
+        front = -(mat4::Ry(-yx) * mat4::Rx(rx)).z_axis();
 	}
     void updatePos(vec3 _pos) {
         pos = _pos;
         view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
     }
+
     //https://terathon.com/blog/oblique-clipping.html
-    void ObliqueProj(vec3 pos, vec3 norm) {
+    void ObliqueProj(vec3 pos, vec3 norm,bool clipOppo = false) {
+        cproj = proj;
+        //far plane 在oblique clip space 會被忽略 但太大會造成數值誤差
+        //所以直接開 1.0f 
+        cproj[10] = (1.0f + 0.01f) / (0.01f - 1.0f);
+        cproj[11] = (2 * 1.0f * 0.01f) / (0.01f - 1.0f);
+
         vec3 cpos = (view * vec4(pos, 1)).toVec3();
         vec3 cnorm = (view * vec4(norm, 0)).toVec3();
 		vec4 plane = vec4(cnorm.x, cnorm.y, cnorm.z, -(cnorm * cpos));
-        vec4 q = proj.inverse() * vec4(
+        vec4 q = cproj.inverse() * vec4(
             plane.x < 0.0f ? 1.0f : -1.0f,
             plane.y < 0.0f ? 1.0f : -1.0f,
             1.0f, 1.0f );
 		vec4 c = plane * (2.0f / -(plane * q));
-        cproj = proj;
 
+        if (clipOppo) c = c * (-1.0f);
+
+        // 注意 replace 後 inverse 會變。
+        // 所以直接開一個新的
         cproj.mt[8] = c.x;
         cproj.mt[9] = c.y;
         cproj.mt[10] = c.z + 1.0f;
         cproj.mt[11] = c.w;
     }
-    // 注意 replace 後 inverse 會變。
     mat4 Matrix() const {
         return (proj * view);
     }
+
+    //clip space projection
     mat4 cMatrix() const {
         return (cproj * view);
     }

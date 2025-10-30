@@ -41,7 +41,8 @@ namespace PrimitiveShape {
 void draw_unicube();
 void draw_unicylind();
 void draw_unisphere();
+void draw_unirectangle();
+void drawAxis();
 void drawLink(vec3 a, vec3 b);
 void alignedWithZ(vec3 axis);
 void alignZTo(vec3 axis);
-

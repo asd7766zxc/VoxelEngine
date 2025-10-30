@@ -181,8 +181,6 @@ public:
 				}
 			}
 		}
-		vec3 cen;
-		int cen_cnt = 0;
 		updateWheel();
 		for (auto& vert : vertices) {
 			auto p = vert.pos + pos;
@@ -192,10 +190,6 @@ public:
 			}
 		}
 		vec3 totForce;
-		if (cen_cnt == 0) cen = vec3();
-		else {
-			cen = cen * (1.0f / cen_cnt);
-		}
 		
 		std::vector<std::pair<vec3, ld>> rotations;
 		for (auto& vert : vertices) {
