@@ -43,14 +43,15 @@ void display(){
 
     static Voxel vox;
     static Portal* B = new Portal();
-	B->pos = vec3(0, 15 , -20);
+	B->pos = vec3(0, 20 , -20);
     B->scale = vec3(10, 10, 1);
     //B->rot.x = pi / 4.0;
 
     static Portal* A = new Portal(B);
 	A->pos = vec3(20, 40 ,0);
     B->linkto = A;
-
+    A->render_offset =  5;
+    B->render_offset = -5;
     vox.pos = vec3(20, 40, 0);
     vox.scale = vec3(4,4,4);
     vox.rot.x += 0.01;
@@ -98,16 +99,17 @@ void display(){
     glLoadMatrixf(camera->Matrix().transposed().mt);
 	A->camEndDraw();
     
-    //B->camDraw(*camera,*A);
-    //vd->drawSingleVoxel(vox);
-    //drawScence();
+    B->camDraw(*camera,*A);
+    vd->drawSingleVoxel(vox);
+    drawScence();
+
 
     glLoadMatrixf(camera->Matrix().transposed().mt);
-    //B->camEndDraw();
+    B->camEndDraw();
 
     drawScence();
-    //drawCut(A);
-    //drawCut(B,true);
+    drawCut(A);
+    drawCut(B,true);
 
     glutSwapBuffers();
     return;

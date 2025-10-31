@@ -2,12 +2,6 @@
 #include "Camera.hpp"
 class Portal : public GameObject {
 public:
-	void draw() override {
-		glPushMatrix();
-			glMultMatrixf(localToWorld().transposed().mt);
-			draw_unirectangle();
-		glPopMatrix();
-	}
 	Portal* linkto;
 	Portal() {
 		linkto = nullptr;
@@ -16,11 +10,23 @@ public:
 		linkto = _linkto;
 		scale = linkto->scale; //防止形變
 	}
+	float render_offset = 10.0f;
+	// 為了避免傳送時造成門畫在臉上(破圖) 的問題
+	// 把門的顯示往 forward 方向往前移
+	void draw() override {
+		glPushMatrix();
+			glMultMatrixf(localToWorld().transposed().mt);
+			glMultMatrixf(matrix4::trans(vec3(0,0, render_offset)).transposed().mt);
+			draw_unirectangle();
+		glPopMatrix();
+	}
 	void warp(Camera* camera) {
 		if (linkto == nullptr) return;
 		vec3 v = camera->pos - pos;
+		float dis = 5.0f;
 
-		if (uni(forward()) * v < 2.0f && abs(v) < 10.0f) {
+		//dis 其實是沒差的 鏡頭不會看起來像位移
+		if (uni(forward()) * v < dis && abs(v) < 10.0f) {
 			camera->pos = (linkto->localToWorld() * worldToLocal() * vec4(camera->pos, 1)).toVec3();
 		}
 
@@ -58,10 +64,7 @@ public:
 		glStencilFunc(GL_NEVER, 0, 0); 
 		glClear(GL_STENCIL_BUFFER_BIT);
 
-		glPushMatrix();
-			glMultMatrixf(localToWorld().transposed().mt);
-			draw_unirectangle();
-		glPopMatrix();
+		draw();
 
 		glLoadMatrixf(pcam.cMatrix().transposed().mt);
 
@@ -77,10 +80,7 @@ public:
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		glDepthMask(GL_TRUE);
 
-		glPushMatrix();
-			glMultMatrixf(localToWorld().transposed().mt);
-			draw_unirectangle();
-		glPopMatrix();
+		draw();
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
