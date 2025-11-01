@@ -12,7 +12,6 @@ struct Color {
 	}
 };
 namespace PrimitiveShape {
-
 	const float cube[8][3] = {
 			{0, 0, 0},
 			{1, 0, 0},
@@ -43,6 +42,5 @@ void draw_unicylind();
 void draw_unisphere();
 void draw_unirectangle();
 void drawAxis();
-void drawLink(vec3 a, vec3 b);
 void alignedWithZ(vec3 axis);
 void alignZTo(vec3 axis);

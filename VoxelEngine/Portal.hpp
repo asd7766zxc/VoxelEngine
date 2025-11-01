@@ -1,5 +1,7 @@
+#pragma once
 #include "GameObject.hpp"
 #include "Camera.hpp"
+
 class Portal : public GameObject {
 public:
 	Portal* linkto;
@@ -10,7 +12,8 @@ public:
 		linkto = _linkto;
 		scale = linkto->scale; //防止形變
 	}
-	float render_offset = 10.0f;
+
+	float render_offset = 0.0f;
 	// 為了避免傳送時造成門畫在臉上(破圖) 的問題
 	// 把門的顯示往 forward 方向往前移
 	void draw() override {
@@ -20,16 +23,16 @@ public:
 			draw_unirectangle();
 		glPopMatrix();
 	}
+
 	void warp(Camera* camera) {
 		if (linkto == nullptr) return;
 		vec3 v = camera->pos - pos;
-		float dis = 5.0f;
+		float dis = 3.0f;
 
 		//dis 其實是沒差的 鏡頭不會看起來像位移
 		if (uni(forward()) * v < dis && abs(v) < 10.0f) {
 			camera->pos = (linkto->localToWorld() * worldToLocal() * vec4(camera->pos, 1)).toVec3();
 		}
-
 	}
 	void camDraw(const Camera& cam) {
 		camDraw(cam,*linkto);
@@ -66,7 +69,7 @@ public:
 
 		draw();
 
-		glLoadMatrixf(pcam.cMatrix().transposed().mt);
+		pcam.useCMatrix();
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		glStencilFunc(GL_LEQUAL, 1, 0xFF); //if (ref & mask) <= (stencil & mask)

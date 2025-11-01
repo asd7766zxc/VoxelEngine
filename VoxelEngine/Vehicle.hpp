@@ -6,12 +6,12 @@
 #include "Box.hpp"
 #include "BoundingBox.hpp"
 
-std::vector<BoundingBox* > BBs;
+std::vector<Box* > BBs;
 
 class Vehicle: public GameObject {
 public:
 	SpringGraph* G;
-	Box box;
+	BoundingBox box;
 	
 	//box
 	std::vector<Vertex> vertices;

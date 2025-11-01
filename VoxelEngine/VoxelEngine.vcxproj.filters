@@ -16,21 +16,18 @@
     <Filter Include="標頭檔\Physics">
       <UniqueIdentifier>{3d58996b-6b26-4998-b36e-3fac5b07f0b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="標頭檔\Utility">
+      <UniqueIdentifier>{4f26f766-dad1-4a2c-a61c-80159e4a1a9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\Voxel">
+      <UniqueIdentifier>{e56abf43-7a88-4052-8ce4-2979ac12e5da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\Raytrace">
+      <UniqueIdentifier>{1e07d8cd-b8b9-42ee-a088-a2b53f2dbca0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
-    <ClCompile Include="Storages.cpp">
-      <Filter>標頭檔</Filter>
-    </ClCompile>
-    <ClCompile Include="MathUtility.cpp">
-      <Filter>標頭檔</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawingUtility.cpp">
-      <Filter>標頭檔</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicUtility.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="Spring.hpp">
@@ -39,29 +36,14 @@
     <ClCompile Include="TerrainGenerator.hpp">
       <Filter>標頭檔</Filter>
     </ClCompile>
+    <ClCompile Include="DrawingUtility.cpp">
+      <Filter>標頭檔\Utility</Filter>
+    </ClCompile>
     <ClCompile Include="Wheel.hpp">
-      <Filter>標頭檔</Filter>
+      <Filter>標頭檔\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MathUtility.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="Storages.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="Voxel.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="VoxelGenerator.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="VoxelDrawer.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawingUtility.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
@@ -74,26 +56,53 @@
     <ClInclude Include="Joint.hpp">
       <Filter>標頭檔\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="DrawObject.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="SpringSuperGraph.hpp">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="GlobalDefinitions.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="Vehicle.hpp">
+    <ClInclude Include="FrameBuffer.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.hpp">
+    <ClInclude Include="GameObject.hpp">
       <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Portal.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.hpp">
+      <Filter>標頭檔\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawingUtility.hpp">
+      <Filter>標頭檔\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtility.hpp">
+      <Filter>標頭檔\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Vehicle.hpp">
+      <Filter>標頭檔\Physics</Filter>
     </ClInclude>
     <ClInclude Include="BoundingBox.hpp">
-      <Filter>標頭檔</Filter>
+      <Filter>標頭檔\Physics</Filter>
     </ClInclude>
     <ClInclude Include="Box.hpp">
-      <Filter>標頭檔</Filter>
+      <Filter>標頭檔\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxel.hpp">
+      <Filter>標頭檔\Voxel</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelDrawer.hpp">
+      <Filter>標頭檔\Voxel</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelGenerator.hpp">
+      <Filter>標頭檔\Voxel</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.hpp">
+      <Filter>標頭檔\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="SpringSuperGraph.hpp">
+      <Filter>標頭檔\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Ray.hpp">
+      <Filter>標頭檔\Raytrace</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

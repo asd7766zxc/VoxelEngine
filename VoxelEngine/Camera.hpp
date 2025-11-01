@@ -1,8 +1,8 @@
 #pragma once
-#include "MathUtility.hpp"
+
+#include "Utilities.hpp"
 #include "DrawingUtility.hpp"
-#include "Voxel.hpp"
-#include <iostream>
+
 class Camera {
 public:
 	vec3 pos,front;
@@ -92,8 +92,12 @@ public:
     mat4 cMatrix() const {
         return (cproj * view);
     }
-    void LookAt() {
-        //glLoadMatrixf(Matrix().transposed().mt);
-        glLoadMatrixf(view.transposed().mt);
+
+    void useMatrix() const {
+        glLoadMatrixf(Matrix().transposed().mt);
+    }
+    
+    void useCMatrix() {
+        glLoadMatrixf(cMatrix().transposed().mt);
     }
 };

@@ -130,27 +130,26 @@
   <ItemGroup>
     <ClCompile Include="DrawingUtility.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MathUtility.cpp" />
-    <ClCompile Include="PhysicUtility.cpp" />
     <ClCompile Include="Spring.hpp" />
-    <ClCompile Include="Storages.cpp" />
     <ClCompile Include="TerrainGenerator.hpp" />
     <ClCompile Include="Wheel.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BoundingBox.hpp" />
     <ClInclude Include="Box.hpp" />
+    <ClInclude Include="BoundingBox.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="DrawingUtility.hpp" />
+    <ClInclude Include="FrameBuffer.hpp" />
     <ClInclude Include="GameObject.hpp" />
     <ClInclude Include="GlobalDefinitions.hpp" />
     <ClInclude Include="Joint.hpp" />
     <ClInclude Include="MathUtility.hpp" />
     <ClInclude Include="PhysicUtility.hpp" />
     <ClInclude Include="Portal.hpp" />
+    <ClInclude Include="Ray.hpp" />
     <ClInclude Include="SpringGraph.hpp" />
     <ClInclude Include="SpringSuperGraph.hpp" />
-    <ClInclude Include="Storages.hpp" />
+    <ClInclude Include="Utilities.hpp" />
     <ClInclude Include="Vehicle.hpp" />
     <ClInclude Include="Vertex.hpp" />
     <ClInclude Include="Voxel.hpp" />

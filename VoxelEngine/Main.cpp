@@ -1,65 +1,51 @@
 /*-----------------------------------------------------------
- *   An non-euclidan engine implement
+ *   An non-euclidan engine implementation
  *   Author: asd
  */
+
+ //TODO:replace pointers with shared_ptr
 
 #include <stdio.h>
 #include <math.h>
 #include <GL/glut.h>
 
+
 #include "Camera.hpp"
-#include "MathUtility.hpp"
 #include "Voxel.hpp"
 #include "VoxelDrawer.hpp"
-#include "TerrainGenerator.hpp"
 #include "SpringGraph.hpp"
 #include "SpringSuperGraph.hpp"
 #include "DrawingUtility.hpp"
 #include "GlobalDefinitions.hpp"
 #include "Vehicle.hpp"
 #include "Portal.hpp"
+#include "FrameBuffer.hpp"
+
 
 Camera* camera;
 SpringSuperGraph* spring_graph;
 
 std::vector<GameObject* > draw_vec;
+std::vector<GameObject* > portal_obj;
+std::vector<Portal* > portals;
 VoxelDrawer* vd;
 
 
 int width = 512, height = 512;
 
-void  myinit(){
-    glDrawBuffer(GL_BACK);
-    glClearColor(0.0, 0.0, 0.0, 1.0);     
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_DEPTH_TEST);
-}
-
 
 Vehicle* car;
 bool camera_following = false;
+
+void mainLoop(int val) {
+    for (auto obj : draw_vec) obj->update();
+    glutTimerFunc(0, mainLoop, -1);
+}
+
+//main render event
 void display(){
-
-    static Voxel vox;
-    static Portal* B = new Portal();
-	B->pos = vec3(0, 20 , -20);
-    B->scale = vec3(10, 10, 1);
-    //B->rot.x = pi / 4.0;
-
-    static Portal* A = new Portal(B);
-	A->pos = vec3(20, 40 ,0);
-    B->linkto = A;
-    A->render_offset =  5;
-    B->render_offset = -5;
-    vox.pos = vec3(20, 40, 0);
-    vox.scale = vec3(4,4,4);
-    vox.rot.x += 0.01;
-    vox.rot.y += 0.01;
-
-    A->warp(camera);
-    //B->warp(camera);
-
+    for (auto& portal : portals) portal->warp(camera);
+    static FrameBuffer fbo;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     //全部變換 (包含投影都塞MODELVIEW裡)
@@ -71,52 +57,29 @@ void display(){
         camera->front += vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
-    auto drawCut = [&](Portal* P,bool flip = false) {
-        glPushMatrix();
-        bool oppo = (camera->pos - P->pos) * P->forward() < 0;
-        if (flip) oppo = !oppo;
-        if (P == B) {
-            vox.pos = (B->localToWorld() * A->worldToLocal() * vec4(vox.pos, 1)).toVec3();
-        }
-        camera->ObliqueProj(P->pos,P->forward(), oppo);
-        glLoadMatrixf(camera->cMatrix().transposed().mt);
-        vd->drawSingleVoxel(vox);
-        glPopMatrix();
-        if (P == B) {
-            vox.pos = (A->localToWorld() * B->worldToLocal() * vec4(vox.pos, 1)).toVec3();
-        }
-    };
+
     auto drawScence = [&]() {
         terrain_generator->draw();
         for (auto obj : draw_vec) obj->draw();
         drawAxis();
 	};
-	A->camDraw(*camera);
 
-    vd->drawSingleVoxel(vox);
-	drawScence();
+    for (auto& portal : portals) {
+        portal->camDraw(*camera);
+	        drawScence();
+            camera->useMatrix();
+	    portal->camEndDraw();
+            drawScence();
+    }
 
-    glLoadMatrixf(camera->Matrix().transposed().mt);
-	A->camEndDraw();
-    
-    B->camDraw(*camera,*A);
-    vd->drawSingleVoxel(vox);
-    drawScence();
-
-
-    glLoadMatrixf(camera->Matrix().transposed().mt);
-    B->camEndDraw();
-
-    drawScence();
-    drawCut(A);
-    drawCut(B,true);
-
+    fbo.generate();
+    fbo.render();
     glutSwapBuffers();
     return;
 }
 
 
-void my_reshape(int w, int h){
+void onReshape(int w, int h){
 
     width = w;
     height = h;
@@ -133,7 +96,7 @@ void my_reshape(int w, int h){
     glLoadIdentity();
 }
 
-//Key handling (remainder: 記得變成 key up，down (非 repeat key))
+//TODO : Key handling (remainder: 記得變成 key up，down (非 repeat key))
 void keyboard_func(unsigned char key, int x, int y){
 
     if (key == 'Q' || key == 'q') exit(0);
@@ -175,23 +138,19 @@ void keyboard_func(unsigned char key, int x, int y){
         car->totTorque += vec3(0, 100, 0);
     }
 }
-void mainLoop(int val) {
-    for (auto obj : draw_vec) obj->update();
-    glutTimerFunc(0, mainLoop, -1);
-}
 
 void passive_func(int x, int y) {
     camera->mouseMove(x - width/2,y - height/2);
     glutWarpPointer(width / 2, height / 2);
 }
 
-void main(int argc, char** argv)
-{
+void main(int argc, char** argv){
     /*-----Initialize the GLUT environment-------*/
     glutInit(&argc, argv);
 
     /*-----Depth buffer is used, be careful !!!----*/
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+#pragma region Terrain
     terrain_generator = new TerrainGenerator(
         [](ld x, ld y) {
             if (-10 <= x && x < 10 && -30 <= y && y < 40) {
@@ -208,13 +167,26 @@ void main(int argc, char** argv)
         vec3{ -50,1,-50}, 100, 100,2);
 
     terrain_generator->generate();
-    //terrains.U.push_back(terrain_generator);
+#pragma endregion
 
     glutInitWindowSize(width, height);
     glutCreateWindow("i.car");
 
-    myinit();      /*---Initialize other state varibales----*/
-    camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
+#pragma region glInitializations
+    glDrawBuffer(GL_BACK);
+    glReadBuffer(GL_BACK);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+#pragma endregion
+
+
+camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
+
+#pragma region setup car
+
     auto g = std::vector<Joint>{ {vec3(0,0,0)},{vec3(10,0,0)},{vec3(0,10,0)},{vec3(0,0,10)},{vec3(10,10,0)},{vec3(10,10,10)},{vec3(10,0,10)}};
     SpringGraph * sg = new SpringGraph(g);
     SpringGraph * sg1 = new SpringGraph(g);
@@ -238,11 +210,11 @@ void main(int argc, char** argv)
     spring_graph->addGraph(sg1);
     spring_graph->build();
     spring_graph->addEdge(sg,sg1,Spring{0,1});
-    
+
     car = new Vehicle();
     draw_vec.push_back(car);
     for (int i = 0; i < 4; ++i) {
-        auto bx = new BoundingBox();
+        auto bx = new Box();
         bx->vert.pos = vec3(10  - (i+1) * 4, 12 , -4 - (i + 1));
         bx->color = i % 2 ? Color{ 1,1,1 } : Color{ 1,0,0 };
         bx->isBuilding = i % 2;
@@ -250,13 +222,28 @@ void main(int argc, char** argv)
         draw_vec.push_back(bx);
     }
     vd = new VoxelDrawer();
+#pragma endregion
+#pragma	region setup portals
+    Portal* B = new Portal();
+    B->pos = vec3(0, 20, -20);
+    B->scale = vec3(10, 10, 1);
+
+    Portal* A = new Portal(B);
+    A->pos = vec3(20, 40, 0);
+    B->linkto = A;
+
+	portals.push_back(A);
+#pragma endregion
 
     // Event registrations 
+#pragma region EventRegistration
     glutDisplayFunc(display);
     glutIdleFunc(display);
-    glutReshapeFunc(my_reshape);
+    glutReshapeFunc(onReshape);
     glutKeyboardFunc(keyboard_func);
     glutPassiveMotionFunc(passive_func);
+#pragma endregion
+
     glutTimerFunc(1, mainLoop, -1);
     glutMainLoop();
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include "DrawingUtility.hpp"
-#include "MathUtility.hpp"
 
 void draw_unicube() {
     for (int i = 0; i < 6; i++) {
@@ -59,11 +58,6 @@ void drawAxis() {
         draw_unicylind();
         glPopMatrix();
     }
-}
-
-void drawLink(vec3 a, vec3 b) {
-    vec3 axi = b - a; // 把空間轉成 b - a 是 z-axis
-
 }
 
 void alignedWithZ(vec3 axis) {
