@@ -360,3 +360,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/VoxelEngine/x64/Debug/VoxelEngine.tlog
+/VoxelEngine/x64/Debug/vc143.idb
+/VoxelEngine/x64/Debug/VoxelEngine.exe.recipe
+/VoxelEngine/x64/Debug/VoxelEngine.exe.recipe
