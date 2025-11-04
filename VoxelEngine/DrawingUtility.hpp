@@ -10,6 +10,9 @@ struct Color {
 	friend Color blend(Color A, Color B, float p) {
 		return A * p + B * (1.0 - p);
 	}
+	Color toGamma() const {
+		return Color(sqrt(r), sqrt(g), sqrt(b), a);
+	}
 };
 namespace PrimitiveShape {
 	const float cube[8][3] = {

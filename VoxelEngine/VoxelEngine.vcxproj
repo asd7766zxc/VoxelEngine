@@ -149,6 +149,7 @@
     <ClInclude Include="Ray.hpp" />
     <ClInclude Include="SpringGraph.hpp" />
     <ClInclude Include="SpringSuperGraph.hpp" />
+    <ClInclude Include="Tunnel.hpp" />
     <ClInclude Include="Utilities.hpp" />
     <ClInclude Include="Vehicle.hpp" />
     <ClInclude Include="Vertex.hpp" />

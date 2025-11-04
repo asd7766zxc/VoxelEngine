@@ -104,5 +104,8 @@
     <ClInclude Include="Ray.hpp">
       <Filter>標頭檔\Raytrace</Filter>
     </ClInclude>
+    <ClInclude Include="Tunnel.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

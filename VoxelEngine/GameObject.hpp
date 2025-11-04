@@ -7,6 +7,10 @@ public:
 	vec3 rot;
 	vec3 scale;
 
+	vec3 velocity;
+	vec3 force;
+	float mass = 1.0f;
+
 	GameObject():scale(1,1,1) {}
 	virtual void draw() {}
 	virtual void update() {}
