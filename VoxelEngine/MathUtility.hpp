@@ -6,7 +6,16 @@ public:
 	ld x, y, z;
 	vec3(ld _x, ld _y, ld _z) :x(_x), y(_y), z(_z) {};
 	vec3(ld* arr) :x(arr[0]), y(arr[1]), z(arr[2]) {};
+	vec3(const ld* arr) :x(arr[0]), y(arr[1]), z(arr[2]) {};
 	vec3() : x(0), y(0), z(0) {};
+	
+	operator const float* () const {
+		float* A = new float[3];
+		A[0] = x;
+		A[1] = y;
+		A[2] = z;
+		return A;
+	}
 
 	vec3 operator + (vec3 a) const { return vec3(x + a.x, y + a.y, z + a.z); }
 	inline void operator += (vec3 a) {
@@ -110,7 +119,14 @@ public:
 	vec4 operator / (ld c) { return vec4(x / c, y / c, z / c, w / c); }
 	ld operator * (vec4 a) { return (x * a.x + y * a.y + z * a.z, w * a.w); }
 	vec4 operator * (ld a) { return vec4(x * a, y * a, z * a, w * a); }
-
+	operator const float* () {
+		float* A = new float[4];
+		A[0] = x;
+		A[1] = y;
+		A[2] = z;
+		A[3] = w;
+		return A;
+	}
 	inline void operator *= (ld c) {
 		x *= c, y *= c, z *= c, w *= c;
 	}
@@ -126,6 +142,9 @@ public:
 	float mt[16];
 	matrix4() {
 		makeZero();
+	}
+	matrix4(std::vector<vec4> _mt) {
+
 	}
 	float& operator [](int i) {
 		return mt[i];
@@ -365,7 +384,7 @@ public:
 		return x_axis() * v.x + y_axis() * v.y + z_axis() * v.z + vec3(mt[3], mt[7], mt[11]);
 	}
 
-	matrix4 rotate(vec3 axis, float ang) const {
+	inline static matrix4 Rotate(vec3 axis, float ang)  {
 		matrix4 m;
 		auto [x, y, z] = axis;
 		ld _c = 1 - cos(ang);

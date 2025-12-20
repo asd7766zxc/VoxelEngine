@@ -16,14 +16,14 @@ struct Color {
 };
 namespace PrimitiveShape {
 	const float cube[8][3] = {
-			{0, 0, 0},
-			{1, 0, 0},
-			{1, 1, 0},
-			{0, 1, 0},
-			{0, 0, 1},
-			{1, 0, 1},
-			{1, 1, 1},
-			{0, 1, 1}
+			{0, 0, 0},	// 0 
+			{1, 0, 0},	// 1
+			{1, 1, 0},	// 2
+			{0, 1, 0},	// 3
+			{0, 0, 1}, // 4
+			{1, 0, 1}, // 5
+			{1, 1, 1}, // 6
+			{0, 1, 1}  // 7
 	};
 
 	const int face[6][4] = { 
@@ -34,7 +34,14 @@ namespace PrimitiveShape {
 		{2, 3, 7, 6}, 
 		{0, 4, 7, 3} 
 	};
-
+	const float norms[6][3] = {
+		{0,0,-1},
+		{0,-1,0},
+		{1,0,0},
+		{0,0,1},
+		{0,1,0},
+		{-1,0,0}
+	};
 };
 
 #define T4C(X) (X).r,(X).g,(X).b,(X).a
@@ -44,6 +51,7 @@ void draw_unicube();
 void draw_unicylind();
 void draw_unisphere();
 void draw_unirectangle();
-void drawAxis();
+void drawAxis(float len = 10.0f);
 void alignedWithZ(vec3 axis);
 void alignZTo(vec3 axis);
+void drawLine(vec3 A, vec3 B);

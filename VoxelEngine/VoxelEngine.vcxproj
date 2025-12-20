@@ -147,6 +147,7 @@
     <ClInclude Include="PhysicUtility.hpp" />
     <ClInclude Include="Portal.hpp" />
     <ClInclude Include="Ray.hpp" />
+    <ClInclude Include="Sphere.hpp" />
     <ClInclude Include="SpringGraph.hpp" />
     <ClInclude Include="SpringSuperGraph.hpp" />
     <ClInclude Include="Tunnel.hpp" />

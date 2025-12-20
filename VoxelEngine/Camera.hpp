@@ -2,6 +2,7 @@
 
 #include "Utilities.hpp"
 #include "DrawingUtility.hpp"
+#include <iostream>
 
 class Camera {
 public:
@@ -11,11 +12,15 @@ public:
     ld vertical_sensitivity = 0.003;
     ld rx = 0.0f;
     ld yx = 0.0f;
+    ld rz = 0.0f;
 
     mat4 view;
     mat4 proj;
     mat4 cproj;
 
+    void updView() {
+        view = mat4::Rz(rz) * mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
+    }
     Camera(vec3 _pos, vec3 _front) : up(0,1,0) {
         pos = _pos;
         front = _front;
@@ -23,7 +28,7 @@ public:
         view.makeIdentity();
         proj.makeIdentity();
 
-        view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
+        updView();
     }
     vec3 getRight() const {
         return (mat4::Ry(-yx) * mat4::Rx(rx)).x_axis();
@@ -44,20 +49,57 @@ public:
 
     }
 
+    void make_ortho(int w, int h,float sz = 10) {
+        float aspect_ratio = float(h) / float(w);
+        float nearp = -0.0f;
+        float farp = 100.0;
+        float left = -sz;
+        float right = sz;
+        float bottom = -sz * aspect_ratio;
+        float top = sz * aspect_ratio;
+        proj.makeZero();
+        proj[3 ] = - (right + left) / (right - left);
+        proj[7 ] = - (top + bottom) / (top - bottom);
+        proj[11] = - (farp + nearp) / (farp - nearp);
+
+        proj[0 ] =  2 / (right - left);
+        proj[5 ] =  2 / (top - bottom);
+        proj[10] = -2 / (farp - nearp);
+        proj[15] = 1;
+        //std::cout << proj << '\n';
+        return;
+    }
+
     void mouseMove(float dx, float dy) {
         yx += dx * horizontal_sensitivity;
         rx -= dy * vertical_sensitivity;
         if (rx >=  pi / 2) rx = pi / 2 - 0.1f;
         if (rx <= -pi / 2) rx = -pi / 2 + 0.1f;
         
-		view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
+        updView();
         front = -(mat4::Ry(-yx) * mat4::Rx(rx)).z_axis();
 	}
     void updatePos(vec3 _pos) {
         pos = _pos;
-        view = mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
+        updView();
     }
-
+    void lookAt(vec3 _pos) {
+        auto nw = pos - _pos;
+        auto u = (nw ^ up);
+        auto v = (u ^ nw);
+        std::vector<vec3> tmp = {uni(u), uni(v), uni(nw)};
+        view.makeIdentity();
+        mat4 T;
+        T.makeIdentity();
+        for (int j = 0; j < 3; ++j) {
+            T[j * 4 + 3] = -pos[j];
+        }
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j)
+                view[i * 4 + j] = tmp[i][j];
+        }
+        view = view * T;
+    }
     //https://terathon.com/blog/oblique-clipping.html
     void ObliqueProj(vec3 pos, vec3 norm,bool clipOppo = false) {
         cproj = proj;

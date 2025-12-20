@@ -9,6 +9,7 @@ public:
 
 	vec3 velocity;
 	vec3 force;
+	vec3 torque;
 	float mass = 1.0f;
 
 	GameObject():scale(1,1,1) {}

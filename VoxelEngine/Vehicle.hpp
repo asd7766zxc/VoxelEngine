@@ -17,6 +17,8 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<Wheel* > wheels;
 	std::vector<Spring> springs;
+	std::vector<vec3> norms;
+
 	ld joint_size = 1.0f;
 
 	ld sx = 2, sy = 1, sz = 4;
@@ -27,11 +29,14 @@ public:
 	// car
 	// 力作用在 vertices 上，整體移動為合力
 	// 力會造成轉動。
-
+	
 	Vehicle() {
 		pos = vec3(sx / 2, sy / 2, sz / 2);
 		for (auto pt : PrimitiveShape::cube) {
 			vertices.push_back({ vec3(pt[0] * sx, pt[1] * sy, pt[2] * sz) - pos });
+		}
+		for (auto norm : PrimitiveShape::norms) {
+			norms.push_back(vec3(norm));
 		}
 		std::vector<Joint> joints(8);
 		G = new SpringGraph(joints);
@@ -53,6 +58,7 @@ public:
 	}
 	void draw_body() {
 		for (int i = 0; i < 6; i++) {
+			glNormal3fv(norms[i]);
 			glBegin(GL_POLYGON);  /* Draw the face */
 			glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + pos));
 			glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + pos));
@@ -104,10 +110,10 @@ public:
 		for (int i = 0; i < axiss.size(); ++i) {
 			glColor3f(TC(colors[i % 3]));
 			glPushMatrix();
-			glTranslatef(TP(pos));
-			alignZTo(axiss[i]);
-			glScalef(.2, .2, abs(axiss[i]));
-			draw_unicylind();
+				glTranslatef(TP(pos));
+				alignZTo(axiss[i]);
+				glScalef(.2, .2, abs(axiss[i]));
+				draw_unicylind();
 			glPopMatrix();
 		}
 	}
@@ -206,7 +212,12 @@ public:
 			if (abs(totTorque) < 1) continue;
 			vert.pos = rotate(vert.pos,uni(totTorque), abs(totTorque) * dt);
 		}
-			totTorque = vec3();
+		for (auto& norm : norms) {
+			if (abs(totTorque) < 1) continue;
+			norm = rotate(norm, uni(totTorque), abs(totTorque) * dt);
+		}
+
+		totTorque = vec3();
 
 		//ground adjustment
 		velo += totForce * dt;

@@ -107,5 +107,8 @@
     <ClInclude Include="Tunnel.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="Sphere.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
