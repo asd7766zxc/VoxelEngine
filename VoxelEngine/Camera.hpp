@@ -135,6 +135,29 @@ public:
         return (cproj * view);
     }
 
+    void useProj() const {
+        glLoadMatrixf(proj.transposed().mt);
+	}
+    void useView() const {
+        glLoadMatrixf(view.transposed().mt);
+	}
+    void useCProj() const {
+        glLoadMatrixf(cproj.transposed().mt);
+	}
+    
+    void applyMatrix() const {
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(proj.transposed().mt);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(view.transposed().mt);
+    }
+    void applyCMatrix() const {
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(cproj.transposed().mt);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(view.transposed().mt);
+	}
+
     void useMatrix() const {
         glLoadMatrixf(Matrix().transposed().mt);
     }

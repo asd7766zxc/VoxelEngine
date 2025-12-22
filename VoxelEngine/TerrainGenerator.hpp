@@ -86,32 +86,48 @@ public:
 	inline int getPos(int i, int j) {
 		return i * ydim + j; 
 	}
+	vec3 getPointNorm(int i, int j) {
+		ld x = points[getPos(i, j)][0];
+		ld y = points[getPos(i, j)][2];
+		auto ret = dF(x, y);
+		return ret;
+	}
 	void draw() override {
+		applyColorMaterials({ .5,.5,.5,0 }, { .5,.5,.5,0 }, { 0,0,0 }, { 0,0,0,0 }, 0.0);
 		for (int i = 0; i < xdim; ++i) {
 			for (int j = 0; j < ydim; ++j) {
 				if (i < xdim - 1 && j < ydim - 1) {
+					auto tmp = std::vector<vec3>{ points[getPos(i, j)] ,points[getPos(i + 1, j)] ,points[getPos(i, j + 1)] };
+					glNormal3fv((tmp[2] - tmp[0]) ^ (tmp[1] - tmp[0]));
 					glBegin(GL_POLYGON);
-						glColor3fv(colors[getPos(i, j)]);
+						//glColor3fv(colors[getPos(i, j)]);
+						glNormal3fv(getPointNorm(i,j));
 						glVertex3fv(points[getPos(i, j)]);
 
-						glColor3fv(colors[getPos(i+1, j)]);
+						//glColor3fv(colors[getPos(i+1, j)]);
+						glNormal3fv(getPointNorm(i+1, j));
 						glVertex3fv(points[getPos(i + 1, j)]);
 
-						glColor3fv(colors[getPos(i, j+1)]);
+						//glColor3fv(colors[getPos(i, j+1)]);
+						glNormal3fv(getPointNorm(i, j+1));
 						glVertex3fv(points[getPos(i, j + 1)]);
 					glEnd();
 				}
 
 				if (i && j) {
+					auto tmp = std::vector<vec3>{ points[getPos(i, j)] ,points[getPos(i - 1, j)] ,points[getPos(i, j - 1)] };
+					glNormal3fv((tmp[2] - tmp[0]) ^ (tmp[1] - tmp[0]));
 					glBegin(GL_POLYGON);
-
-						glColor3fv(colors[getPos(i, j)]);
+						//glColor3fv(colors[getPos(i, j)]);
+						glNormal3fv(getPointNorm(i, j));
 						glVertex3fv(points[getPos(i, j)]);
 
-						glColor3fv(colors[getPos(i-1, j)]);
+						//glColor3fv(colors[getPos(i-1, j)]);
+						glNormal3fv(getPointNorm(i-1, j));
 						glVertex3fv(points[getPos(i - 1, j)]);
 						
-						glColor3fv(colors[getPos(i, j-1)]);
+						//glColor3fv(colors[getPos(i, j-1)]);
+						glNormal3fv(getPointNorm(i, j-1));
 						glVertex3fv(points[getPos(i, j - 1)]);
 					glEnd();
 				}

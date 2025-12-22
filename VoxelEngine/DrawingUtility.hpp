@@ -13,6 +13,15 @@ struct Color {
 	Color toGamma() const {
 		return Color(sqrt(r), sqrt(g), sqrt(b), a);
 	}
+
+	operator const float* () const {
+		float* A = new float[4];
+		A[0] = r;
+		A[1] = g;
+		A[2] = b;
+		A[3] = a;
+		return A;
+	}
 };
 namespace PrimitiveShape {
 	const float cube[8][3] = {
@@ -55,3 +64,9 @@ void drawAxis(float len = 10.0f);
 void alignedWithZ(vec3 axis);
 void alignZTo(vec3 axis);
 void drawLine(vec3 A, vec3 B);
+void applyMaterials(Color ambient, Color diffuse, Color specular, Color emission, float shininess);
+void applyColorMaterials(Color ambient, Color diffuse, Color specular, Color emission, float shininess);
+Color hsv_to_rgb(int h, float s, float v);
+Color GetColorFrom(float angle);
+float RadToDegree(float rad);
+float DegreeToRad(float deg);

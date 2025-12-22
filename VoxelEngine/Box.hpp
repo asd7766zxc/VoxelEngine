@@ -23,8 +23,9 @@ public:
 		}
 	}
 	void draw() override {
-		glColor3f(TC(color));
+		applyColorMaterials({ 0,0,0,0 }, color, {1,1,1}, {0,0,0,0}, 64.0);
 		for (int i = 0; i < 6; i++) {
+			glNormal3fv(PrimitiveShape::norms[i]);
 			glBegin(GL_POLYGON);  /* Draw the face */
 				glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + vert.pos));
 				glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + vert.pos));

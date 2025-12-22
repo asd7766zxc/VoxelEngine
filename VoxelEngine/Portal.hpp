@@ -52,7 +52,8 @@ public:
 		// 所以得拿另一個門的平面 (會被轉到這個門上) 去做 Oblique Clip
 		pcam.ObliqueProj(_pos, linkto.forward());
 
-		glLoadMatrixf(cam.Matrix().transposed().mt);
+		cam.applyMatrix();
+		//glLoadMatrixf(cam.Matrix().transposed().mt);
 
 		//disable draw to color&depth buffer
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -69,7 +70,7 @@ public:
 
 		draw();
 
-		pcam.useCMatrix();
+		pcam.applyCMatrix();
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		glStencilFunc(GL_LEQUAL, 1, 0xFF); //if (ref & mask) <= (stencil & mask)

@@ -45,6 +45,9 @@ public:
 	}
 	friend vec3 operator / (ld a, vec3 v) { return vec3(a / v.x, a / v.y, a / v.z); };
 	friend vec3 operator * (ld a, vec3 v) { return vec3(v.x * a, v.y * a, v.z * a); }
+	friend vec3 ori(vec3 a, vec3 b, vec3 c) {
+		return (b - a) ^ (c - a);
+	}
 	static vec3 random() {
 		return vec3(random_double(), random_double(), random_double());
 	}

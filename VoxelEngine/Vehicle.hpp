@@ -5,6 +5,7 @@
 #include "Wheel.hpp"
 #include "Box.hpp"
 #include "BoundingBox.hpp"
+#include "SpotLight.hpp"
 
 std::vector<Box* > BBs;
 
@@ -12,7 +13,8 @@ class Vehicle: public GameObject {
 public:
 	SpringGraph* G;
 	BoundingBox box;
-	
+	std::vector<SpotLight*> lights;
+
 	//box
 	std::vector<Vertex> vertices;
 	std::vector<Wheel* > wheels;
@@ -55,15 +57,21 @@ public:
 			wheels[i]->vert.pos = vertices[PrimitiveShape::face[1][i]].pos + pos;
 			springs.push_back(Spring{ i,PrimitiveShape::face[1][i],20,0.1});
 		}
+		lights.push_back(new SpotLight(GL_LIGHT7));
+		lights.push_back(new SpotLight(GL_LIGHT6));
+		lights[0]->scale = vec3(0.5,0.5,0.5);
+		lights[1]->scale = vec3(0.5, 0.5, 0.5);
 	}
 	void draw_body() {
+		
+		applyColorMaterials({ 0,0,0,0 }, { 0,0,0,0 }, { 1,1,1 }, { 0,0,0,0 }, 10.0);
 		for (int i = 0; i < 6; i++) {
 			glNormal3fv(norms[i]);
 			glBegin(GL_POLYGON);  /* Draw the face */
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][2]].pos + pos));
-			glVertex3f(TP(vertices[PrimitiveShape::face[i][3]].pos + pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][0]].pos + pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][1]].pos + pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][2]].pos + pos));
+				glVertex3f(TP(vertices[PrimitiveShape::face[i][3]].pos + pos));
 			glEnd();
 		}
 	}
@@ -122,6 +130,7 @@ public:
 		draw_body();
 		//drawAxis();
 		for (auto& wheel : wheels) wheel->draw();
+		for (auto& light : lights) light->draw();
 		//G->draw();
 		draw_spring();
 	}
@@ -263,5 +272,7 @@ public:
 			}
 		}
 		velo += dv;
+		lights[0]->pos = vertices[PrimitiveShape::face[0][1]].pos + pos;
+		lights[1]->pos = vertices[PrimitiveShape::face[0][2]].pos + pos;
 	}
 };

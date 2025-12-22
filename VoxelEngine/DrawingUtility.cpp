@@ -3,6 +3,7 @@
 
 void draw_unicube() {
     for (int i = 0; i < 6; i++) {
+		glNormal3fv(PrimitiveShape::norms[i]);
         glBegin(GL_POLYGON);  /* Draw the face */
             glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][0]]);
             glVertex3fv(PrimitiveShape::cube[PrimitiveShape::face[i][1]]);
@@ -34,11 +35,31 @@ void draw_unisphere() {
 }
 void draw_unirectangle() {
     glBegin(GL_POLYGON);
-    glVertex3f(-1, -1, 0);
-    glVertex3f(1, -1, 0);
-    glVertex3f(1, 1, 0);
-    glVertex3f(-1, 1, 0);
+        glVertex3f(-1, -1, 0);
+        glVertex3f(1, -1, 0);
+        glVertex3f(1, 1, 0);
+        glVertex3f(-1, 1, 0);
     glEnd();
+}
+
+void applyMaterials(Color ambient, Color diffuse, Color specular,Color emission, float shininess) {
+    glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialfv(GL_FRONT, GL_EMISSION, emission);
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+}
+
+void applyColorMaterials(Color ambient,Color diffuse, Color specular, Color emission, float shininess) {
+    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+    glColor4fv((diffuse));
+    glColorMaterial(GL_FRONT_AND_BACK, GL_SPECULAR);
+    glColor4fv((specular));
+	glColorMaterial(GL_FRONT_AND_BACK, GL_EMISSION);
+    glColor4fv((emission));
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT);
+    glColor4fv((ambient));
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
 
@@ -89,6 +110,42 @@ void drawLine(vec3 A,vec3 B) {
         glScalef(.2, .2, abs(B - A));
         draw_unicylind();
     glPopMatrix();
+}
+
+Color hsv_to_rgb(int h, float s, float v) {
+    int hi = h / 60;
+    float f, p, q, t;
+    f = h / 60.0 - hi;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (hi) {
+    case 0:
+        return Color(v, t, p);
+    case 1:
+        return Color(q, v, p);
+    case 2:
+        return Color(p, v, t);
+    case 3:
+        return Color(p, q, v);
+    case 4:
+        return Color(t, p, v);
+    case 5:
+        return Color(v, p, q);
+    }
+    return Color{};
+}
+Color GetColorFrom(float angle) {
+    float sat = 0.5f;
+    int h = (angle / pi / 2.0f) * 360;
+    int hue = h % 360;
+    return hsv_to_rgb(hue, sat, 1.0f);
+}
+float RadToDegree(float rad) {
+    return rad * 180.0f / pi;
+}
+float DegreeToRad(float deg) {
+    return deg * pi / 180.0f;
 }
 //std::pair<ld,vec3> alignZTo(vec3 axis) {
 //    vec3 zaxi(0, 0, 1);

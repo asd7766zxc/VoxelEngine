@@ -20,6 +20,7 @@
 #include "Vehicle.hpp"
 #include "Portal.hpp"
 #include "FrameBuffer.hpp"
+#include "Tunnel.hpp"
 
 
 Camera* camera;
@@ -49,6 +50,92 @@ mat4 proj_record;
 mat4 view_record;
 FrameBuffer* fbo;
 int curselect = 3;
+
+bool light_0_on = true;
+bool light_1_on = true;
+
+enum LightIndex {
+    SUN = 0,
+    POT,
+    CAR,
+    LightCount
+} currentLight;
+
+struct LightParam {
+    float value;
+    float minValue = 0.0;
+    float maxValue = 2 * pi;
+    float step = 0.1;
+    LightParam(float minValue = 0.0, float maxValue = 2 * pi, float value = 0.0, float step = 0.1) : minValue(minValue), maxValue(maxValue), value(value), step(step) {
+        value = std::max(minValue, std::min(maxValue, value));
+    }
+    void add() {
+        value += step;
+        value = std::min(value, maxValue);
+    }
+    void sub() {
+        value -= step;
+        value = std::max(value, minValue);
+    }
+};
+int selectedLightParam[LightCount];
+std::vector<LightParam> lightParams[LightCount] = {
+    {
+        LightParam(0.0f, 200 * pi,DegreeToRad(60)), //sun angle
+        LightParam(0.0f, 1.0,1.0), // sun light intensity
+        LightParam(0.0f,2 * pi,DegreeToRad(35)) , // sun light color
+		LightParam(0.0f,1.0f,1.0f,1.0f) // sun on/off
+    },{
+        LightParam(0.0f, 1.0,0.2), // point light intensity
+        LightParam(0.0f,2 * pi,DegreeToRad(90)) , // point light color
+		LightParam(0.0f,1.0f,1.0f,1.0f) // point light on/off
+    },{
+        LightParam(0.0f, 1.0,1.0), // car head light intensity
+        LightParam(0.0f,2 * pi,DegreeToRad(135)) , // car head light color
+		LightParam(0.0f,180.0f,30.0f,1.0f), // car head light cutoff angle
+		LightParam(0.0f,1.0f,1.0f,1.0f) // car head light on/off
+    }
+};
+
+void setup_light() {
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, vec4(0.3, 0.3, 0.3, 1.0));
+
+    lightParams[POT].back().value > 0.5f ? glEnable(GL_LIGHT0) : glDisable(GL_LIGHT0);
+
+	//Point light
+	auto pot_color = GetColorFrom(lightParams[POT][1].value) * lightParams[POT][0].value;
+    pot_color.a = 1.0f;
+    glPushMatrix();
+        glTranslatef(0,70.0f,0);
+        applyColorMaterials({ 0,0,0 }, { 0,0,0 }, { 0,0,0 }, pot_color, 0);
+        draw_unisphere();
+    glPopMatrix();
+    glLightfv(GL_LIGHT0, GL_POSITION, vec4(0, 70.0,0, 1.0));
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, pot_color);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, pot_color);
+
+	auto sun_angle = lightParams[SUN][0].value;
+	auto sun_dir = vec3(cos(sun_angle), sin(sun_angle), 0);
+	auto sun_color = GetColorFrom(lightParams[SUN][2].value) * lightParams[SUN][1].value;
+	sun_color.a = 1.0f;
+    //Directional light (SUN)
+	lightParams[SUN].back().value > 0.5f ? glEnable(GL_LIGHT1) : glDisable(GL_LIGHT1);
+    glLightfv(GL_LIGHT1, GL_POSITION, vec4(sun_dir, 0.0));
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, sun_color);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, sun_color);
+
+    for (auto carlights : car->lights) {
+		carlights->light_on = lightParams[CAR].back().value > 0.5f;
+		carlights->light_color = GetColorFrom(lightParams[CAR][1].value) * lightParams[CAR][0].value;
+		carlights->cutoff_angle = lightParams[CAR][2].value;
+        if (camera_following) {
+			carlights->rot.y = -camera->yx;
+            carlights->rot.x = camera->rx;
+        }
+    }
+}
+
+
 //main render event
 void display(){
     for (auto& portal : portals) portal->warp(camera);
@@ -58,6 +145,7 @@ void display(){
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     auto drawScence = [&]() {
+        setup_light();
         terrain_generator->draw();
         for (auto obj : draw_vec) obj->draw();
         drawAxis(50.0f);
@@ -126,7 +214,7 @@ void display(){
         for (auto& portal : portals) {
             portal->camDraw(*camera);
             drawScence();
-            camera->useMatrix();
+            camera->applyMatrix();
             portal->camEndDraw();
             drawScence();
         }
@@ -226,8 +314,38 @@ void onReshape(int w, int h){
     fbo->width = w;
 }
 
+
+void onMouse(int button, int state, int x, int y) {
+
+    //Scroll up
+    if (button == 3) {
+		lightParams[currentLight][selectedLightParam[currentLight]].add();
+        if(currentLight == CAR && selectedLightParam[currentLight] == 2) {
+            for (auto light : car->lights) {
+                light->t = light->animation_time;
+            }
+		}
+    }
+
+	//Scroll down
+    if (button == 4) {
+        lightParams[currentLight][selectedLightParam[currentLight]].sub();
+        if (currentLight == CAR && selectedLightParam[currentLight] == 2) {
+            for (auto light : car->lights) {
+                light->t = light->animation_time;
+            }
+        }
+	}
+}
+
 //TODO : Key handling (remainder: 記得變成 key up，down (非 repeat key))
 void keyboard_func(unsigned char key, int x, int y){
+    if (key == '0') {
+        light_0_on = !light_0_on;
+    }
+    if (key == '9') {
+		light_1_on = !light_1_on;
+    }
     if ('1' <= key && key <= '5') {
         curselect = key - '1';
         onReshape(width, height);
@@ -291,6 +409,16 @@ void keyboard_func(unsigned char key, int x, int y){
         ortho_sz -= 1.0f;
         onReshape(width, height);
     }
+    if (key == ',') {
+		currentLight = currentLight <= 0 ? LightIndex(0) : LightIndex(currentLight - 1);
+    }
+    if (key == '.') {
+        currentLight = currentLight >= (LightCount - 1) ? LightIndex(LightCount - 1) : LightIndex(currentLight + 1);
+    }
+    if (key == 'l') {
+        auto& p_ind = selectedLightParam[currentLight];
+		p_ind = (p_ind + 1) % lightParams[currentLight].size();
+    }
 }
 
 void passive_func(int x, int y) {
@@ -306,19 +434,23 @@ void main(int argc, char** argv){
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 #pragma region Terrain
     terrain_generator = new TerrainGenerator(
-        [](ld x, ld y) {
-            if (-10 <= x && x < 10 && -30 <= y && y < 40) {
+        [](ld x, ld y) { //F
+            if (-10 <= x && x < 80 && -30 <= y && y < 80) {
                 return (double)10.0f;
             }
             return 5 * (cos(x / 10.0) + sin(y / 10.0)); 
         }, 
-        [](ld x, ld y) {
-            return vec3();
+        [](ld x, ld y) { //dF
+            if (-10 <= x && x < 80 && -30 <= y && y < 80) {
+                return vec3(0,1,0);
+            }
+            return vec3(-sin(x/10.0) * 0.5, 1, cos(y / 10.0) * 0.5);
         },
-        [](ld x, ld y) {
+        [](ld x, ld y) { //colorF
             return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
         },
-        vec3{ -50,1,-50}, 100, 100,2);
+        vec3{ -50,1,-50},
+            200, 200,4);
 
     terrain_generator->generate();
 #pragma endregion
@@ -334,11 +466,16 @@ void main(int argc, char** argv){
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     glEnable(GL_NORMALIZE);
+	glShadeModel(GL_SMOOTH);
+    glEnable(GL_COLOR_MATERIAL);
+
 #pragma endregion
 
 
-camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
+    camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
 
 #pragma region setup car
 
@@ -378,6 +515,7 @@ camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
     }
     vd = new VoxelDrawer();
 #pragma endregion
+
 #pragma	region setup portals
     Portal* B = new Portal();
     B->pos = vec3(0, 20, -20);
@@ -389,6 +527,41 @@ camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
 
 	portals.push_back(A);
 #pragma endregion
+    /*
+    
+	Portal* TA_entry = new Portal();
+    Portal* TB_entry = new Portal();
+    Portal* TA_exit = new Portal();
+    Portal* TB_exit = new Portal();
+
+    Tunnel* TA = new Tunnel();
+    Tunnel* TB = new Tunnel();
+    TB->length = 25.0f;
+    TA->pos = vec3(0, 10 + TA->height / 2.0, 10);
+    TB->pos = vec3(20, 10 + TB->height / 2.0, 10);
+	draw_vec.push_back(TA);
+    draw_vec.push_back(TB);
+
+	//need to construct the viewing DAG to correctly render the portals
+	TA_entry->pos = TA->pos;
+	TA_exit->pos = TA->pos + vec3(0, 0, TA->length);
+	TB_entry->pos = TB->pos;
+	TB_exit->pos = TB->pos + vec3(0, 0, TB->length);
+
+	TA_entry->linkto = TB_entry;
+	TB_entry->linkto = TA_entry;
+
+	TA_exit->linkto = TB_exit;
+	TB_exit->linkto = TA_exit;
+
+	TA_entry->scale = TB_entry->scale = TA_exit->scale = TB_exit->scale = vec3(TA->width/2.0,TB->height/2.0,1);
+
+	portals.push_back(TA_entry);
+    portals.push_back(TA_exit);
+    portals.push_back(TB_entry);
+    portals.push_back(TB_exit);
+
+    */
     fbo = new FrameBuffer();
     // Event registrations 
 #pragma region EventRegistration
@@ -397,7 +570,9 @@ camera = new Camera(vec3(0, 12, -10),vec3(0,0,0));
     glutReshapeFunc(onReshape);
     glutKeyboardFunc(keyboard_func);
     glutPassiveMotionFunc(passive_func);
+    glutMouseFunc(onMouse);
 #pragma endregion
+
 
     glutTimerFunc(1, mainLoop, -1);
     glutMainLoop();
