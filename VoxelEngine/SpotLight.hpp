@@ -18,7 +18,7 @@ public:
 		glLightfv(light_id, GL_POSITION, vec4(0, 0, 0,1));
 		glLightfv(light_id, GL_SPOT_DIRECTION, vec4(0,0,-1, 0));
 		glLightfv(light_id, GL_DIFFUSE, light_color);
-		glLightfv(light_id, GL_SPECULAR, light_color);
+		glLightfv(light_id, GL_SPECULAR,light_color * 0);
 		glLightf(light_id, GL_SPOT_EXPONENT, 1.0f);
 		glLightf(light_id, GL_SPOT_CUTOFF, cutoff_angle);
 		glLightf(light_id, GL_CONSTANT_ATTENUATION, 1.0f);

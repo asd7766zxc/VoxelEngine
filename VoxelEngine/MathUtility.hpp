@@ -105,8 +105,56 @@ public:
 
 		return ret;
 	}
+	bool near_zero() const {
+		auto s = 1e-8;
+		return (std::fabs(x) < s) && (std::fabs(y) < s) && (std::fabs(z) < s);
+	}
+
+	friend vec3 mul(vec3 a,vec3 b) {
+		return vec3(a.x * b.x, a.y * b.y, a.z * b.z);
+	}
 
 };
+inline vec3 polar_to_cartesian(vec3 point) {
+	auto [x, y, z] = point;
+	float R = abs(vec3(x,y,0));
+	float rad = atan2(y, x);
+	if (rad < 0) rad = 2 * pi + rad;
+	return vec3(R, rad, 0);
+}
+inline vec3 random_in_unit_disk() {
+	while (true) {
+		auto p = vec3(random_double(-1, 1), random_double(-1, 1), 0);
+		if (abs(p) < 1)
+			return p;
+	}
+}
+inline vec3 reflect(const vec3& v, const vec3& n) {
+	return v - 2 * (v * n) * n;
+}
+//etai = from, etat = to
+inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
+	auto cos_theta = std::min(-uv * n, 1.0f);
+	vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
+	vec3 r_out_parallel = -std::sqrt(std::abs(1.0 - abs2(r_out_perp))) * n;
+	return r_out_perp + r_out_parallel;
+}
+inline vec3 random_unit_vector() {
+	while (true) {
+		auto p = vec3::random(-1, 1);
+		auto lensq = abs2(p);
+		if ((std::numeric_limits<ld>::min() * 1e10) < lensq && lensq <= 1)
+			return p / sqrt(lensq);
+	}
+}
+inline vec3 random_on_hemisphere(const vec3& normal) {
+	vec3 on_unit_sphere = random_unit_vector();
+	if ((on_unit_sphere * normal) > 0.0) // In the same hemisphere as the normal
+		return on_unit_sphere;
+	else
+		return -on_unit_sphere;
+}
+
 
 class vec4 {
 public:
@@ -117,6 +165,7 @@ public:
 	vec4(vec3 vec, ld _w = 1) :x(vec.x), y(vec.y), z(vec.z), w(_w) {};
 
 	vec3 toVec3() { return vec3(x, y, z); }
+	vec3 toVec3DivW() { return vec3(x / w, y / w, z / w); }
 	vec4 operator + (vec4 a) { return vec4(x + a.x, y + a.y, z + a.z, w + a.w); }
 	vec4 operator - (vec4 a) { return vec4(x - a.x, y - a.y, z - a.z, w - a.w); }
 	vec4 operator / (ld c) { return vec4(x / c, y / c, z / c, w / c); }

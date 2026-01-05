@@ -9,17 +9,17 @@ class Box : public GameObject {
 public:
 	Vertex vert;
 	BoundingBox box;
-	ld sx = 3, sy = 3, sz = 3;
 	std::vector<Vertex> vertices;
 	Color color;
 	bool isBuilding = false;
 
-	Box() {
+	Box(vec3 sca) {
+		scale = sca;
 		color = Color{ 1,1,1 };
 
-		vert.pos = vec3(sx / 2, sy / 2, sz / 2);
+		vert.pos = scale * 0.5;
 		for (auto pt : PrimitiveShape::cube) {
-			vertices.push_back({ vec3(pt[0] * sx, pt[1] * sy, pt[2] * sz) - vert.pos });
+			vertices.push_back({ mul(vec3(pt),scale) - vert.pos });
 		}
 	}
 	void draw() override {

@@ -22,8 +22,8 @@
     <Filter Include="標頭檔\Voxel">
       <UniqueIdentifier>{e56abf43-7a88-4052-8ce4-2979ac12e5da}</UniqueIdentifier>
     </Filter>
-    <Filter Include="標頭檔\Raytrace">
-      <UniqueIdentifier>{1e07d8cd-b8b9-42ee-a088-a2b53f2dbca0}</UniqueIdentifier>
+    <Filter Include="標頭檔\Textures">
+      <UniqueIdentifier>{b351d3d3-3e02-4712-9005-553cbf2afc09}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -41,6 +41,9 @@
     </ClCompile>
     <ClCompile Include="Wheel.hpp">
       <Filter>標頭檔\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -101,13 +104,28 @@
     <ClInclude Include="SpringSuperGraph.hpp">
       <Filter>標頭檔\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Ray.hpp">
-      <Filter>標頭檔\Raytrace</Filter>
-    </ClInclude>
     <ClInclude Include="Tunnel.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="Sphere.hpp">
+    <ClInclude Include="SpotLight.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="GlassSphere.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeMap.hpp">
+      <Filter>標頭檔\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="MetalMaterial.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="SphereMap.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

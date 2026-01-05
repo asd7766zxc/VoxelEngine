@@ -74,9 +74,10 @@ public:
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		glStencilFunc(GL_LEQUAL, 1, 0xFF); //if (ref & mask) <= (stencil & mask)
-
+		
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
+		//Preceeding to draw the scene from the portal camera
 	}
 	void camEndDraw() {
 		//收尾得把 portal 在 depth buffer 再畫一次 (portal有可能會被擋住)

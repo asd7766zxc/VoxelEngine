@@ -21,7 +21,8 @@
 #include "Portal.hpp"
 #include "FrameBuffer.hpp"
 #include "Tunnel.hpp"
-
+#include "GlassSphere.hpp"
+#include "SphereMap.hpp"
 
 Camera* camera;
 SpringSuperGraph* spring_graph;
@@ -135,7 +136,8 @@ void setup_light() {
     }
 }
 
-
+shared_ptr<SphereMap> sphere_map;
+unsigned int tex = 0;
 //main render event
 void display(){
     for (auto& portal : portals) portal->warp(camera);
@@ -162,20 +164,6 @@ void display(){
              auto ret = toWorld * vec4(a,1);
              return ret.toVec3() / ret.w;
          };
-
-         //for (int i = 0; i < 4; ++i) {
-         //    auto p0 = corners[i];
-         //    auto p1 = corners[(i + 1) % 4];
-         //    auto p2 = p1;
-         //    p2.z = 1;
-         //    auto p3 = p0;
-         //    p3.z = 1;
-         //    glColor4f(1, 1, 1, 1);
-         //    auto aa = trans(p0);
-         //    auto bb = trans(p3);
-         //    drawLine(aa, (bb - aa) * 0.01 + aa);
-         //    //drawLine(trans(p1), trans(p2));
-         //}
 
 
          glEnable(GL_BLEND);
@@ -224,7 +212,10 @@ void display(){
         camera->front += vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
-    if (curselect == 4) {
+
+    sphere_map->generate(drawScence);
+	glViewport(0, 0, width, height);
+    /*if (curselect == 4) {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         std::vector<ld> A = { 0.0f, float(width / 2.0) };
@@ -260,15 +251,75 @@ void display(){
     }
     else {
         draw_world();
-    }
+    }*/
 
     //auto [x, y, z, w] = (camera->Matrix() * vec4(car->pos,1));
     //fbo->setCen(x/w, y/w);
     //fbo->generate();
     //fbo->render();
+
+	/*draw_world();*/
+    //glPushMatrix();
+    camera->make_ortho(width,height,0); 
+    drawScence();
+    glEnable(GL_TEXTURE_2D);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glReadBuffer(GL_BACK);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, width, height, 0);
+
+    glDisable(GL_LIGHTING);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+
+    //glFrontFace(GL_CCW);
+    glColor3f(1, 1, 1);
+	//glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+	//glOrtho(0, 1, 0, 1, -1, 1);
+	//glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
+
+    std::vector<std::vector<vec3>> polys = { {
+        {0,0,0},
+        {0,10,0},
+        {10,10,0},
+        {10,0,0}
+    },{
+        {0,0,10},
+        {0,10,10},
+        {10,10,10},
+        {10,0,10}
+    },{
+        {10,0,0},
+        {10,10,0},
+        {10,10,0},
+        {10,0,0}
+    } };
+    //glDisable(GL_DEPTH_TEST);
+	//camera->make_ortho(width, height, 10.0f);
+	static GlassSphere gs(5, camera);
+	gs.pos = vec3(5, 20, 5);
+    gs.draw();
+	//glEnable(GL_DEPTH_TEST);
+    glBegin(GL_POLYGON);
+        glVertex3f(10, 0 , 10);
+        glVertex3f(10, 10, 10);
+        glVertex3f(0 , 10, 10);
+        glVertex3f(0 , 0 , 10);
+    glEnd();
+    //camera->resize(width, height, 0.01f, zfar, fov);
+	glDisable(GL_CULL_FACE);
+    glEnable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+    //glPopMatrix();
+    
+    draw_world();
     glutSwapBuffers();
     return;
 }
+
 
 
 void onReshape(int w, int h){
@@ -506,14 +557,16 @@ void main(int argc, char** argv){
     car = new Vehicle();
     draw_vec.push_back(car);
     for (int i = 0; i < 4; ++i) {
-        auto bx = new Box();
+        auto bx = new Box(vec3{1,1,1} * 4);
+ 
         bx->vert.pos = vec3(10  - (i+1) * 4, 12 , -4 - (i + 1));
         bx->color = i % 2 ? Color{ 1,1,1 } : Color{ 1,0,0 };
-        bx->isBuilding = i % 2;
+        bx->isBuilding = 1;
         BBs.push_back(bx);
         draw_vec.push_back(bx);
     }
     vd = new VoxelDrawer();
+	sphere_map = make_shared<SphereMap>();
 #pragma endregion
 
 #pragma	region setup portals
@@ -527,41 +580,7 @@ void main(int argc, char** argv){
 
 	portals.push_back(A);
 #pragma endregion
-    /*
     
-	Portal* TA_entry = new Portal();
-    Portal* TB_entry = new Portal();
-    Portal* TA_exit = new Portal();
-    Portal* TB_exit = new Portal();
-
-    Tunnel* TA = new Tunnel();
-    Tunnel* TB = new Tunnel();
-    TB->length = 25.0f;
-    TA->pos = vec3(0, 10 + TA->height / 2.0, 10);
-    TB->pos = vec3(20, 10 + TB->height / 2.0, 10);
-	draw_vec.push_back(TA);
-    draw_vec.push_back(TB);
-
-	//need to construct the viewing DAG to correctly render the portals
-	TA_entry->pos = TA->pos;
-	TA_exit->pos = TA->pos + vec3(0, 0, TA->length);
-	TB_entry->pos = TB->pos;
-	TB_exit->pos = TB->pos + vec3(0, 0, TB->length);
-
-	TA_entry->linkto = TB_entry;
-	TB_entry->linkto = TA_entry;
-
-	TA_exit->linkto = TB_exit;
-	TB_exit->linkto = TA_exit;
-
-	TA_entry->scale = TB_entry->scale = TA_exit->scale = TB_exit->scale = vec3(TA->width/2.0,TB->height/2.0,1);
-
-	portals.push_back(TA_entry);
-    portals.push_back(TA_exit);
-    portals.push_back(TB_entry);
-    portals.push_back(TB_exit);
-
-    */
     fbo = new FrameBuffer();
     // Event registrations 
 #pragma region EventRegistration
@@ -572,8 +591,14 @@ void main(int argc, char** argv){
     glutPassiveMotionFunc(passive_func);
     glutMouseFunc(onMouse);
 #pragma endregion
+    glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-
+	//glPolygonOffset(1.0f, 1.0f);
     glutTimerFunc(1, mainLoop, -1);
     glutMainLoop();
 }
