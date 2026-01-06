@@ -4,8 +4,18 @@
 struct Color {
 	float r, g, b, a;
 	Color(float _r, float _g, float _b, float _a = 1.0) :r(_r), g(_g), b(_b), a(_a) {}
+	Color(int hex) {
+		r = ((hex >> 16) & 0xFF) / 255.0;
+		g = ((hex >> 8) & 0xFF) / 255.0;
+		b = ((hex >> 0) & 0xFF) / 255.0;
+		a = 1.0f;
+	}
 	Color() :r(0.0), g(0.0), b(0.0), a(1.0) {}
-	Color operator * (float  c) { return Color(r * c, g * c, b * c, a * c); }
+	//Color operator * (float  c) { return Color(r * c, g * c, b * c, a * c); }
+	friend Color operator * (const Color col, float c) {
+		auto [r, g, b, a] = col;
+		return Color(r * c, g * c, b * c, a * c);
+	}
 	Color operator + (Color rst) { return Color(r + rst.r, g + rst.g, b + rst.b, a + rst.a); }
 	friend Color blend(Color A, Color B, float p) {
 		return A * p + B * (1.0 - p);

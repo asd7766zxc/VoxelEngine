@@ -17,7 +17,8 @@ public:
     mat4 view;
     mat4 proj;
     mat4 cproj;
-
+    
+    
     void updView() {
         view = mat4::Rz(rz) * mat4::Rx(-rx) * mat4::Ry(yx) * mat4::trans(-pos);
     }

@@ -8,7 +8,7 @@ class CubeMap : public Texture {
 public:
 	shared_ptr<Camera> cam;
 	CubeMap() {
-		cam = 
+		//cam = 
 		base = Texture::tex_count;
 		Texture::tex_count += 6;
 		glGenTextures(6, &Texture::texes[base]);

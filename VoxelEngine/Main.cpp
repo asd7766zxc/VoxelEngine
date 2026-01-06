@@ -23,6 +23,9 @@
 #include "Tunnel.hpp"
 #include "GlassSphere.hpp"
 #include "SphereMap.hpp"
+#include "EnderTexture.hpp"
+#include "Skybox.hpp"
+#include "ShootingStarTexture.hpp"
 
 Camera* camera;
 SpringSuperGraph* spring_graph;
@@ -83,12 +86,12 @@ int selectedLightParam[LightCount];
 std::vector<LightParam> lightParams[LightCount] = {
     {
         LightParam(0.0f, 200 * pi,DegreeToRad(60)), //sun angle
-        LightParam(0.0f, 1.0,1.0), // sun light intensity
+        LightParam(0.0f, 1.0,0.0), // sun light intensity
         LightParam(0.0f,2 * pi,DegreeToRad(35)) , // sun light color
 		LightParam(0.0f,1.0f,1.0f,1.0f) // sun on/off
     },{
         LightParam(0.0f, 1.0,0.2), // point light intensity
-        LightParam(0.0f,2 * pi,DegreeToRad(90)) , // point light color
+        LightParam(0.0f,2 * pi,DegreeToRad(180)) , // point light color
 		LightParam(0.0f,1.0f,1.0f,1.0f) // point light on/off
     },{
         LightParam(0.0f, 1.0,1.0), // car head light intensity
@@ -137,15 +140,42 @@ void setup_light() {
 }
 
 shared_ptr<SphereMap> sphere_map;
-unsigned int tex = 0;
+shared_ptr<Skybox> skybox;
+shared_ptr<EnderTexture> ender_tex;
+std::vector<shared_ptr<Texture>> tex_gen_list;
+shared_ptr<ShootingStarTexture> shoot_tex;
+
+void genTexture(){
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClearColor(0, 0, 0, 1);
+
+    for (auto tex : tex_gen_list) tex->render();
+    //glClearColor(0, 0, 0, 1);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+}
 //main render event
 void display(){
-    for (auto& portal : portals) portal->warp(camera);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    genTexture();
+    glutSwapBuffers();
+    return;
 
-    //全部變換 (包含投影都塞MODELVIEW裡)
+    glViewport(0, 0, width, height);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    skybox->render(camera);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    
+    
+    for (auto& portal : portals) portal->warp(camera);
+
     auto drawScence = [&]() {
         setup_light();
         terrain_generator->draw();
@@ -207,14 +237,16 @@ void display(){
             drawScence();
         }
     };
+
     //Camera trace
     if (camera_following) {
         camera->front += vec3(0, 5, 0);
         camera->pos = car->pos + vec3(0, 5, 0);
     }
+    
 
-    sphere_map->generate(drawScence);
-	glViewport(0, 0, width, height);
+    /*sphere_map->generate(drawScence);
+	glViewport(0, 0, width, height);*/
     /*if (curselect == 4) {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -252,70 +284,37 @@ void display(){
     else {
         draw_world();
     }*/
+    draw_world();
 
     //auto [x, y, z, w] = (camera->Matrix() * vec4(car->pos,1));
     //fbo->setCen(x/w, y/w);
     //fbo->generate();
     //fbo->render();
-
-	/*draw_world();*/
-    //glPushMatrix();
-    camera->make_ortho(width,height,0); 
-    drawScence();
     glEnable(GL_TEXTURE_2D);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glReadBuffer(GL_BACK);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, width, height, 0);
-
     glDisable(GL_LIGHTING);
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
+    //genTexture();
 
-    //glFrontFace(GL_CCW);
-    glColor3f(1, 1, 1);
-	//glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-	//glOrtho(0, 1, 0, 1, -1, 1);
-	//glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
-
-    std::vector<std::vector<vec3>> polys = { {
-        {0,0,0},
-        {0,10,0},
-        {10,10,0},
-        {10,0,0}
-    },{
-        {0,0,10},
-        {0,10,10},
-        {10,10,10},
-        {10,0,10}
-    },{
-        {10,0,0},
-        {10,10,0},
-        {10,10,0},
-        {10,0,0}
-    } };
-    //glDisable(GL_DEPTH_TEST);
-	//camera->make_ortho(width, height, 10.0f);
-	static GlassSphere gs(5, camera);
-	gs.pos = vec3(5, 20, 5);
-    gs.draw();
-	//glEnable(GL_DEPTH_TEST);
+    //glDisable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
+    ender_tex->Bind();
+    //camera->applyMatrix();
+    //glClearColor(0, 0, 0, 0);
+    //glColor3f(1, 1, 1);
     glBegin(GL_POLYGON);
-        glVertex3f(10, 0 , 10);
-        glVertex3f(10, 10, 10);
-        glVertex3f(0 , 10, 10);
-        glVertex3f(0 , 0 , 10);
-    glEnd();
-    //camera->resize(width, height, 0.01f, zfar, fov);
-	glDisable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
+        glTexCoord2f(0, 0);
+        glVertex3f(10, 10,0);
+        
+        glTexCoord2f(1, 0);
+        glVertex3f(20, 10,0);
+        
+        glTexCoord2f(1, 1);
+        glVertex3f(20, 20,0);
 
-    //glPopMatrix();
-    
-    draw_world();
+        glTexCoord2f(0, 1);
+        glVertex3f(10, 20,0);
+    glEnd();
+    //glDisable(GL_TEXTURE_2D);
+    //draw_world();
     glutSwapBuffers();
     return;
 }
@@ -498,11 +497,12 @@ void main(int argc, char** argv){
             return vec3(-sin(x/10.0) * 0.5, 1, cos(y / 10.0) * 0.5);
         },
         [](ld x, ld y) { //colorF
-            return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
+            return Color{ 1,1,1 };
+            //return Color{ 1,1,1 } * ((cos(x / 10) + sin(y / 10.0) + 2) / 4.0);
         },
         vec3{ -50,1,-50},
             200, 200,4);
-
+    //terrain_generator->ground_tex = ender_tex;
     terrain_generator->generate();
 #pragma endregion
 
@@ -572,7 +572,7 @@ void main(int argc, char** argv){
 #pragma	region setup portals
     Portal* B = new Portal();
     B->pos = vec3(0, 20, -20);
-    B->scale = vec3(10, 10, 1);
+    B->scale = vec3(20, 20, 1);
 
     Portal* A = new Portal(B);
     A->pos = vec3(20, 40, 0);
@@ -591,12 +591,19 @@ void main(int argc, char** argv){
     glutPassiveMotionFunc(passive_func);
     glutMouseFunc(onMouse);
 #pragma endregion
-    glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+#pragma region Texture
+    terrain_generator->ground_tex = make_shared<EnderTexture>(512, 512, 1.0f, 0.1f, Color(0), 200,Color(1,1,1,1));
+    terrain_generator->isTexturing = true;
+    tex_gen_list.push_back(terrain_generator->ground_tex);
+
+    ender_tex = make_shared<EnderTexture>(512, 512);
+    skybox = make_shared<Skybox>();
+    shoot_tex = make_shared<ShootingStarTexture>(512,512);
+    tex_gen_list.push_back(ender_tex);
+    tex_gen_list.push_back(skybox->end_tex);
+    tex_gen_list.push_back(shoot_tex);
+#pragma endregion
 
 	//glPolygonOffset(1.0f, 1.0f);
     glutTimerFunc(1, mainLoop, -1);

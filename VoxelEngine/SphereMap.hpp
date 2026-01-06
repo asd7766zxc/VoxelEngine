@@ -48,4 +48,6 @@ public:
 		int thetai = int(round((theta / (2 * pi)) * theta_step));
 
 	}
+	void render() override {
+	}
 };

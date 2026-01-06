@@ -136,11 +136,14 @@
     <ClCompile Include="Wheel.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="billboard.hpp" />
     <ClInclude Include="Box.hpp" />
     <ClInclude Include="BoundingBox.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="CubeMap.hpp" />
     <ClInclude Include="DrawingUtility.hpp" />
+    <ClInclude Include="EnderTexture.hpp" />
+    <ClInclude Include="EndstoneTexture.hpp" />
     <ClInclude Include="FrameBuffer.hpp" />
     <ClInclude Include="GameObject.hpp" />
     <ClInclude Include="GlassSphere.hpp" />
@@ -150,6 +153,7 @@
     <ClInclude Include="MetalMaterial.hpp" />
     <ClInclude Include="PhysicUtility.hpp" />
     <ClInclude Include="Portal.hpp" />
+    <ClInclude Include="ShootingStarTexture.hpp" />
     <ClInclude Include="Skybox.hpp" />
     <ClInclude Include="SphereMap.hpp" />
     <ClInclude Include="SpotLight.hpp" />

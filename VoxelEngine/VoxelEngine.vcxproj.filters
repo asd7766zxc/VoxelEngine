@@ -128,5 +128,17 @@
     <ClInclude Include="SphereMap.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="EnderTexture.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="EndstoneTexture.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="ShootingStarTexture.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="billboard.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

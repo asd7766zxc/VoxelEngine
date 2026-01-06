@@ -4,6 +4,7 @@
 #include "MathUtility.hpp"
 #include "GameObject.hpp"
 #include "DrawingUtility.hpp"
+#include "Texture.hpp"
 
 //#include "VoxelGenerator.hpp"
 class TerrainGenerator:public GameObject {
@@ -14,6 +15,7 @@ public:
 	std::function<Color(ld, ld)> colorF;
 	std::vector<ld*> points;
 	std::vector<ld*> colors;
+	shared_ptr<Texture> ground_tex;
 
 	ld width, height;
 	int xdim = 0;
@@ -92,8 +94,19 @@ public:
 		auto ret = dF(x, y);
 		return ret;
 	}
+	vec3 getPointTexCoord(int i, int j) {
+		return vec3(float(i) / xdim, float(j) / ydim, 0);
+	}
+	bool isTexturing = false;
 	void draw() override {
 		applyColorMaterials({ .5,.5,.5,0 }, { .5,.5,.5,0 }, { 0,0,0 }, { 0,0,0,0 }, 0.0);
+		if (isTexturing) {
+			glEnable(GL_TEXTURE_2D);
+			ground_tex->Bind();
+			glTexParameteri(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+		}
+
 		for (int i = 0; i < xdim; ++i) {
 			for (int j = 0; j < ydim; ++j) {
 				if (i < xdim - 1 && j < ydim - 1) {
@@ -101,14 +114,23 @@ public:
 					glNormal3fv((tmp[2] - tmp[0]) ^ (tmp[1] - tmp[0]));
 					glBegin(GL_POLYGON);
 						//glColor3fv(colors[getPos(i, j)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i,j));
+
 						glNormal3fv(getPointNorm(i,j));
 						glVertex3fv(points[getPos(i, j)]);
 
 						//glColor3fv(colors[getPos(i+1, j)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i+1, j));
+						
 						glNormal3fv(getPointNorm(i+1, j));
 						glVertex3fv(points[getPos(i + 1, j)]);
 
 						//glColor3fv(colors[getPos(i, j+1)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i, j+1));
+						
 						glNormal3fv(getPointNorm(i, j+1));
 						glVertex3fv(points[getPos(i, j + 1)]);
 					glEnd();
@@ -119,19 +141,34 @@ public:
 					glNormal3fv((tmp[2] - tmp[0]) ^ (tmp[1] - tmp[0]));
 					glBegin(GL_POLYGON);
 						//glColor3fv(colors[getPos(i, j)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i, j));
+						
 						glNormal3fv(getPointNorm(i, j));
 						glVertex3fv(points[getPos(i, j)]);
 
 						//glColor3fv(colors[getPos(i-1, j)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i-1, j));
+						
 						glNormal3fv(getPointNorm(i-1, j));
 						glVertex3fv(points[getPos(i - 1, j)]);
 						
 						//glColor3fv(colors[getPos(i, j-1)]);
+						if(isTexturing)
+						glTexCoord2fv(getPointTexCoord(i, j-1));
+						
 						glNormal3fv(getPointNorm(i, j-1));
 						glVertex3fv(points[getPos(i, j - 1)]);
 					glEnd();
 				}
 			}
+		}
+		
+		if (isTexturing) {
+			glTexParameteri(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glDisable(GL_TEXTURE_2D);
+
 		}
 	}
 };
