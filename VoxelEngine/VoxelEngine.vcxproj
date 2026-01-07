@@ -130,6 +130,7 @@
   <ItemGroup>
     <ClCompile Include="DrawingUtility.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MirrorTexture.hpp" />
     <ClCompile Include="Spring.hpp" />
     <ClCompile Include="TerrainGenerator.hpp" />
     <ClCompile Include="Texture.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="GlassSphere.hpp" />
     <ClInclude Include="GlobalDefinitions.hpp" />
     <ClInclude Include="Joint.hpp" />
+    <ClInclude Include="LightMap.hpp" />
     <ClInclude Include="MathUtility.hpp" />
     <ClInclude Include="MetalMaterial.hpp" />
     <ClInclude Include="PhysicUtility.hpp" />

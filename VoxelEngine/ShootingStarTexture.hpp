@@ -5,6 +5,7 @@ class ShootingStarTexture : public Texture {
 public:
     float width, height;
     float scale = 1.0f;
+    BYTE data[512 * 512 * 4];
     struct spark {
         vec3 sped;
         vec3 pos;
@@ -50,7 +51,7 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
     void drawHalo(float r,Color color) {
         int slice = 100;
@@ -88,18 +89,21 @@ public:
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         gluOrtho2D(0, width / height, 0, 1);
+
         glEnable(GL_BLEND);
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0, 0, 0, 0.1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
         if (ticks >= pi) ticks = 0;
         ticks += 0.05;
         
         glPushMatrix();
 
-        drawHalo(0.08 * scale, Color(1,1,1,0.2 * pow(sin(ticks),0.05)));
-        drawHalo(0.02 * scale, Color(1, 1, 0, 0.2));
+        //drawHalo(0.08 * scale, Color(1,1,1,0.4 * pow(sin(ticks),0.05)));
+        //drawHalo(0.02 * scale, Color(1, 1, 0, 0.4));
         drawHalo(0.01 * scale, Color(1,1,0,1));
         glBegin(GL_POLYGON);
         glColor4fv(Color(1, 1, 1, 1));
@@ -114,11 +118,27 @@ public:
         }
         
         glPopMatrix();
-        glDisable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
         glReadBuffer(GL_BACK);
         glBindTexture(GL_TEXTURE_2D, getTexID(0));
-        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, width, height, 0);
+        
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        for(int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+				int ind = (j * width + i) * 4;
+                if(data[ind] == data[ind + 1] && data[ind] == data[ind + 2] && data[ind + 2] == 0) {
+                    data[ind] = 0;
+                    data[ind + 1] = 0;
+                    data[ind + 2] = 0;
+                    data[ind + 3] = 0;
+                }
+                else if(data[ind]) {
+					data[ind + 3] = data[ind + 1];
+                }
+            }
+		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        //glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, width, height, 0);
 
 	}
 };

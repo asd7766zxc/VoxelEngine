@@ -8,9 +8,8 @@
 
 //#include "VoxelGenerator.hpp"
 class TerrainGenerator:public GameObject {
-private:
-	std::function<ld(ld, ld)> F; // (x,z) -> y
 public:
+	std::function<ld(ld, ld)> F; // (x,z) -> y
 	std::function<vec3(ld, ld)> dF; // (x,z) -> (x',y',z') normal vector, perpendicular to terrain itselft
 	std::function<Color(ld, ld)> colorF;
 	std::vector<ld*> points;
@@ -95,15 +94,18 @@ public:
 		return ret;
 	}
 	vec3 getPointTexCoord(int i, int j) {
-		return vec3(float(i) / xdim, float(j) / ydim, 0);
+		return vec3(float(i) / xdim,float(j) / ydim, 0);
 	}
 	bool isTexturing = false;
 	void draw() override {
 		applyColorMaterials({ .5,.5,.5,0 }, { .5,.5,.5,0 }, { 0,0,0 }, { 0,0,0,0 }, 0.0);
 		if (isTexturing) {
+			glDisable(GL_LIGHT6);
+			glDisable(GL_LIGHT7);
+
 			glEnable(GL_TEXTURE_2D);
 			ground_tex->Bind();
-			glTexParameteri(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 		}
 
@@ -166,7 +168,10 @@ public:
 		}
 		
 		if (isTexturing) {
-			glTexParameteri(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glEnable(GL_LIGHT6);
+			glEnable(GL_LIGHT7);
+
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			glDisable(GL_TEXTURE_2D);
 
 		}

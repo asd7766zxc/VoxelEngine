@@ -26,6 +26,7 @@
 #include "EnderTexture.hpp"
 #include "Skybox.hpp"
 #include "ShootingStarTexture.hpp"
+#include "LightMap.hpp"
 
 Camera* camera;
 SpringSuperGraph* spring_graph;
@@ -62,6 +63,7 @@ enum LightIndex {
     SUN = 0,
     POT,
     CAR,
+    FOG,
     LightCount
 } currentLight;
 
@@ -88,16 +90,20 @@ std::vector<LightParam> lightParams[LightCount] = {
         LightParam(0.0f, 200 * pi,DegreeToRad(60)), //sun angle
         LightParam(0.0f, 1.0,0.0), // sun light intensity
         LightParam(0.0f,2 * pi,DegreeToRad(35)) , // sun light color
-		LightParam(0.0f,1.0f,1.0f,1.0f) // sun on/off
+        LightParam(0.0f,1.0f,1.0f,1.0f) // sun on/off
     },{
         LightParam(0.0f, 1.0,0.2), // point light intensity
         LightParam(0.0f,2 * pi,DegreeToRad(180)) , // point light color
-		LightParam(0.0f,1.0f,1.0f,1.0f) // point light on/off
+        LightParam(0.0f,1.0f,1.0f,1.0f) // point light on/off
     },{
         LightParam(0.0f, 1.0,1.0), // car head light intensity
         LightParam(0.0f,2 * pi,DegreeToRad(135)) , // car head light color
-		LightParam(0.0f,180.0f,30.0f,1.0f), // car head light cutoff angle
-		LightParam(0.0f,1.0f,1.0f,1.0f) // car head light on/off
+        LightParam(0.0f,180.0f,30.0f,1.0f), // car head light cutoff angle
+        LightParam(0.0f,1.0f,1.0f,1.0f) // car head light on/off
+    },{
+        LightParam(0.0f,2 * pi,DegreeToRad(35)), // fog color
+        LightParam(0.0f,40.0f,10.0f,1.0f), // fog mode
+        LightParam(0.0f,1.0f,0.5f,0.05f), // fog opacity
     }
 };
 
@@ -144,6 +150,8 @@ shared_ptr<Skybox> skybox;
 shared_ptr<EnderTexture> ender_tex;
 std::vector<shared_ptr<Texture>> tex_gen_list;
 shared_ptr<ShootingStarTexture> shoot_tex;
+std::vector<shared_ptr<billboard>> bill_list;
+shared_ptr<LightMap> lightmap;
 
 void genTexture(){
     glClearColor(0, 0, 0, 1);
@@ -156,11 +164,11 @@ void genTexture(){
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_TEXTURE_2D);
 }
+
+float time_elapsed = 0.0f;
 //main render event
 void display(){
     genTexture();
-    glutSwapBuffers();
-    return;
 
     glViewport(0, 0, width, height);
     glMatrixMode(GL_MODELVIEW);
@@ -172,8 +180,26 @@ void display(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
-    
-    
+    if(lightParams[FOG][1].value >= 1.0f)
+        glEnable(GL_FOG);
+    else
+		glDisable(GL_FOG);
+
+    if (lightParams[FOG][1].value >= 30.0f) {
+        glFogi(GL_FOG_MODE, GL_EXP2);
+    }
+    else if(lightParams[FOG][1].value >= 20.0f) {
+        glFogi(GL_FOG_MODE, GL_EXP);
+    }
+    else if (lightParams[FOG][1].value >= 10.0f) {
+        glFogi(GL_FOG_MODE, GL_LINEAR);
+        glFogf(GL_FOG_START, 0);
+        glFogf(GL_FOG_END, 200);
+    }
+
+    glFogfv(GL_FOG_COLOR, GetColorFrom(lightParams[FOG][0].value));
+	glFogf(GL_FOG_DENSITY, lightParams[FOG][2].value);
+
     for (auto& portal : portals) portal->warp(camera);
 
     auto drawScence = [&]() {
@@ -225,7 +251,22 @@ void display(){
             //drawLine(trans(p0), trans(p3));
             //drawLine(trans(p1), trans(p2));
          }
-    
+         glEnable(GL_ALPHA_TEST);
+         glAlphaFunc(GL_GREATER, 0.2f);
+         glMatrixMode(GL_TEXTURE);
+         glLoadIdentity();
+         glPushMatrix();
+         glTranslatef(time_elapsed, time_elapsed, 0);
+         time_elapsed += 0.01f;
+         glMatrixMode(GL_MODELVIEW);
+         for (auto bill : bill_list) {
+			 bill->norm = camera->view.transposed().z_axis();
+             bill->draw(camera);
+         }
+         glMatrixMode(GL_TEXTURE);
+         glPopMatrix();
+         glMatrixMode(GL_MODELVIEW);
+         glDisable(GL_ALPHA_TEST);
          glDisable(GL_BLEND);
     };
     auto draw_world = [&]() {
@@ -297,6 +338,7 @@ void display(){
     //glDisable(GL_TEXTURE_2D);
     //glEnable(GL_TEXTURE_2D);
     ender_tex->Bind();
+   
     //camera->applyMatrix();
     //glClearColor(0, 0, 0, 0);
     //glColor3f(1, 1, 1);
@@ -313,8 +355,42 @@ void display(){
         glTexCoord2f(0, 1);
         glVertex3f(10, 20,0);
     glEnd();
-    //glDisable(GL_TEXTURE_2D);
+
     //draw_world();
+
+    glDisable(GL_TEXTURE_2D);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    gluOrtho2D(0, 1, 0, 1);
+    auto a = uni(skybox->bills[0]->pos);
+    auto front = uni(-camera->view.transposed().z_axis());
+    glEnable(GL_BLEND);
+    auto halo = [&](float r, Color color) {
+        int slice = 100;
+        glPushMatrix();
+        glTranslatef(.5, .5, 0);
+        for (int i = 0; i < slice; ++i) {
+            float theta = (float(i) / slice) * 2 * pi;
+            float theta2 = (float(i + 1) / slice) * 2 * pi;
+            glBegin(GL_POLYGON);
+            glColor4f(0, 0, 0, 0);
+            glVertex2f(r * cos(theta), r * sin(theta));
+            glColor4f(0, 0, 0, 0);
+            glVertex2f(r * cos(theta2), r * sin(theta2));
+            glColor4fv(color);
+            glVertex2f(0, 0);
+
+            glEnd();
+        }
+        glPopMatrix();
+        };
+    halo(0.3, Color(1, 1, 1, std::max(a * front - 0.5f, 0.0f) ));
+    halo(0.5, Color(1, 1, 1, std::max(a * front - 0.5f, 0.0f) * 0.1));
+
     glutSwapBuffers();
     return;
 }
@@ -572,13 +648,22 @@ void main(int argc, char** argv){
 #pragma	region setup portals
     Portal* B = new Portal();
     B->pos = vec3(0, 20, -20);
-    B->scale = vec3(20, 20, 1);
+    B->scale = vec3(10,10, 1);
 
     Portal* A = new Portal(B);
     A->pos = vec3(20, 40, 0);
     B->linkto = A;
 
-	portals.push_back(A);
+    Portal* mirr = new Portal();
+    mirr->pos = vec3(20, 25, -10);
+    mirr->rot = vec3(0,pi,0);
+    mirr->scale = vec3(10, 10, 1);
+
+    Portal* mirro = new Portal(mirr);
+    mirro->pos = vec3(20, 25, -10);
+    mirro->linkto = mirr;
+	//portals.push_back(A);
+    portals.push_back(mirro);
 #pragma endregion
     
     fbo = new FrameBuffer();
@@ -593,16 +678,34 @@ void main(int argc, char** argv){
 #pragma endregion
 
 #pragma region Texture
-    terrain_generator->ground_tex = make_shared<EnderTexture>(512, 512, 1.0f, 0.1f, Color(0), 200,Color(1,1,1,1));
-    terrain_generator->isTexturing = true;
-    tex_gen_list.push_back(terrain_generator->ground_tex);
+
+    //terrain_generator->ground_tex = make_shared<EnderTexture>(512, 512, 1.0f, 0.1f, Color(0), 200,Color(1,1,1,1));
+    skybox = make_shared<Skybox>();
+    //tex_gen_list.push_back(terrain_generator->ground_tex);
+    tex_gen_list.push_back(skybox->shoot_tex);
 
     ender_tex = make_shared<EnderTexture>(512, 512);
-    skybox = make_shared<Skybox>();
-    shoot_tex = make_shared<ShootingStarTexture>(512,512);
+    //shoot_tex = make_shared<ShootingStarTexture>(512,512);
     tex_gen_list.push_back(ender_tex);
+    
+    lightmap = make_shared<LightMap>();
+    lightmap->light = car->lights[0];
+    tex_gen_list.push_back(lightmap);
+
     tex_gen_list.push_back(skybox->end_tex);
-    tex_gen_list.push_back(shoot_tex);
+    for (int i = 0; i < 100; ++i) {
+        auto bill = make_shared<billboard>(ender_tex);
+		bill->rand = true;
+	    bill->pos = vec3(30 + random_double() * 5, 30 + random_double() * 10, 30 + random_double() * 5);
+	    bill->size = random_double()*2;
+        bill_list.push_back(bill);
+
+    }
+
+
+    terrain_generator->ground_tex = lightmap;
+    terrain_generator->isTexturing = true;
+
 #pragma endregion
 
 	//glPolygonOffset(1.0f, 1.0f);
